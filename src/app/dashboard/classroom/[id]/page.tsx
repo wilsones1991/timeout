@@ -36,29 +36,51 @@ export default async function ClassroomPage({ params }: Props) {
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center gap-4">
-            <Link
-              href="/dashboard"
-              className="text-gray-500 hover:text-gray-700"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </Link>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                {classroom.name}
-              </h1>
-              <p className="text-sm text-gray-500">
-                {classroom._count.students} {classroom._count.students === 1 ? 'student' : 'students'}
-              </p>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Link
+                href="/dashboard"
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </Link>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">
+                  {classroom.name}
+                </h1>
+                <p className="text-sm text-gray-500">
+                  {classroom._count.students} {classroom._count.students === 1 ? 'student' : 'students'}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <Link
+                href={`/dashboard/classroom/${id}/history`}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                History
+              </Link>
+              <Link
+                href={`/classroom/${id}/checkin`}
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+                Open Kiosk
+              </Link>
             </div>
           </div>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <StudentList classroomId={id} />
+        <StudentList classroomId={id} classroomName={classroom.name} />
       </main>
     </div>
   )

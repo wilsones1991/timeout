@@ -25,25 +25,52 @@ Last Updated: 2026-01-11
 - [x] Student management (add, edit, remove from classroom)
 - [x] CSV bulk upload for students
 - [x] Student names encrypted at rest (FERPA compliance)
+- [x] QR code generation for student cards
+  - QR code utility (`src/lib/qrcode.ts`)
+  - QR Cards modal with preview and selection
+  - PDF generation with 10 cards per page (business card format)
+
+### Phase 3: Check-In System
+- [x] QR code scanner component (`src/components/QRScanner.tsx`)
+  - Webcam-based QR code scanning using `html5-qrcode`
+  - Manual card ID entry fallback
+  - Camera permission handling
+  - React Strict Mode compatible
+- [x] Check-in/out API routes
+  - `/api/classroom/[id]/kiosk` - Get classroom info and queue
+  - `/api/classroom/[id]/lookup` - Look up student by card ID
+  - `/api/classroom/[id]/checkin` - Handle check-in/out actions
+  - `/api/classroom/[id]/queue` - Get current queue (polling)
+  - `/api/classroom/[id]/history` - Get check-in/out history
+- [x] Student kiosk interface (`/classroom/[id]/checkin`)
+  - Full-screen student-facing interface
+  - QR scanner with status display
+  - Check-in/out confirmation flow
+  - Auto-return to scanner after 3 seconds
+- [x] Live queue component
+  - Real-time display of checked-out students
+  - Duration tracking with extended absence indicator (>15 min)
+  - Auto-polling every 5 seconds
+- [x] Manual check-in/out override (teacher dashboard)
+  - Status column showing In/Out for each student
+  - Check In/Check Out buttons per student
+  - Records marked as manual override
+
+### Phase 4: UI Polish
+- [x] Link to kiosk from classroom page ("Open Kiosk" button)
+- [x] Check-in/out history view (`/dashboard/classroom/[id]/history`)
+  - Filterable by date range
+  - Shows student, date, out time, in time, duration
+  - Indicates manual vs scan check-ins
+  - Pagination with "Load More"
 
 ## In Progress
 
-### Phase 2: Core Features (continued)
-- [ ] QR code generation for student cards
+(None)
 
 ## Todo
 
-### Phase 3: Check-In System
-- [ ] QR code scanner component (webcam)
-- [ ] Check-in/out API routes
-- [ ] Live queue component
-- [ ] Real-time queue updates
-- [ ] Manual check-in/out override
-
-### Phase 4: UI Polish
-- [ ] Student kiosk interface
-- [ ] Check-in/out history view
-- [ ] QR code card printing (PDF generation)
+(MVP Complete!)
 
 ## Known Issues
 - None currently
@@ -65,28 +92,42 @@ src/
 │   │   ├── auth/
 │   │   │   ├── [...nextauth]/route.ts
 │   │   │   └── register/route.ts
+│   │   ├── classroom/[id]/
+│   │   │   ├── checkin/route.ts       # POST check-in/out action
+│   │   │   ├── history/route.ts       # GET check-in/out history
+│   │   │   ├── kiosk/route.ts         # GET kiosk initialization
+│   │   │   ├── lookup/route.ts        # GET student by cardId
+│   │   │   └── queue/route.ts         # GET current queue
 │   │   └── classrooms/
-│   │       ├── route.ts                    # GET (list), POST (create)
+│   │       ├── route.ts               # GET (list), POST (create)
 │   │       └── [id]/
-│   │           ├── route.ts                # GET, PATCH, DELETE classroom
+│   │           ├── route.ts           # GET, PATCH, DELETE classroom
 │   │           └── students/
-│   │               ├── route.ts            # GET (list), POST (add student)
+│   │               ├── route.ts       # GET (list), POST (add student)
 │   │               ├── [studentId]/route.ts # GET, PATCH, DELETE student
-│   │               └── bulk/route.ts       # POST (CSV bulk upload)
+│   │               └── bulk/route.ts  # POST (CSV bulk upload)
+│   ├── classroom/[id]/
+│   │   └── checkin/page.tsx           # Student kiosk interface
 │   └── dashboard/
-│       ├── page.tsx                        # Classroom list dashboard
-│       └── classroom/[id]/page.tsx         # Classroom detail with students
+│       ├── page.tsx                   # Classroom list dashboard
+│       └── classroom/[id]/
+│           ├── page.tsx               # Classroom detail with students
+│           └── history/page.tsx       # Check-in/out history
 ├── components/
 │   ├── ClassroomCard.tsx          # Classroom card with actions
 │   ├── ClassroomList.tsx          # Classroom grid with CRUD
 │   ├── ClassroomModal.tsx         # Create/edit classroom modal
-│   ├── StudentList.tsx            # Student table with CRUD
-│   ├── StudentModal.tsx           # Add/edit student modal
-│   └── CSVUploadModal.tsx         # CSV bulk upload modal
+│   ├── CSVUploadModal.tsx         # CSV bulk upload modal
+│   ├── HistoryList.tsx            # Check-in/out history table
+│   ├── QRCardsModal.tsx           # QR code card generation and PDF export
+│   ├── QRScanner.tsx              # Webcam QR code scanner
+│   ├── StudentList.tsx            # Student table with CRUD + status
+│   └── StudentModal.tsx           # Add/edit student modal
 ├── lib/
 │   ├── auth.ts          # NextAuth configuration
 │   ├── encryption.ts    # AES-256-GCM encryption
 │   ├── prisma.ts        # Prisma client singleton
+│   ├── qrcode.ts        # QR code generation utilities
 │   └── utils.ts         # Password hashing, helpers
 ├── types/
 │   ├── index.ts         # Shared TypeScript types

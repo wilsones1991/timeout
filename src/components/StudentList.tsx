@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import StudentModal from './StudentModal'
 import CSVUploadModal from './CSVUploadModal'
+import QRCardsModal from './QRCardsModal'
 
 type Student = {
   id: string
@@ -12,18 +13,30 @@ type Student = {
   enrolledAt: string
 }
 
-type Props = {
-  classroomId: string
+type QueueItem = {
+  id: string
+  studentId: string
+  studentName: string
+  checkOutAt: string
+  durationMinutes: number
 }
 
-export default function StudentList({ classroomId }: Props) {
+type Props = {
+  classroomId: string
+  classroomName: string
+}
+
+export default function StudentList({ classroomId, classroomName }: Props) {
   const [students, setStudents] = useState<Student[]>([])
+  const [checkedOutStudents, setCheckedOutStudents] = useState<Set<string>>(new Set())
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isCSVModalOpen, setIsCSVModalOpen] = useState(false)
+  const [isQRModalOpen, setIsQRModalOpen] = useState(false)
   const [editingStudent, setEditingStudent] = useState<Student | null>(null)
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
+  const [processingCheckIn, setProcessingCheckIn] = useState<string | null>(null)
 
   const fetchStudents = useCallback(async () => {
     try {
@@ -42,9 +55,31 @@ export default function StudentList({ classroomId }: Props) {
     }
   }, [classroomId])
 
+  const fetchQueue = useCallback(async () => {
+    try {
+      const response = await fetch(`/api/classroom/${classroomId}/queue`)
+      if (response.ok) {
+        const data = await response.json()
+        const checkedOut = new Set<string>(
+          (data.queue || []).map((item: QueueItem) => item.studentId)
+        )
+        setCheckedOutStudents(checkedOut)
+      }
+    } catch {
+      // Ignore queue fetch errors
+    }
+  }, [classroomId])
+
   useEffect(() => {
     fetchStudents()
-  }, [fetchStudents])
+    fetchQueue()
+  }, [fetchStudents, fetchQueue])
+
+  // Poll for queue updates
+  useEffect(() => {
+    const interval = setInterval(fetchQueue, 10000)
+    return () => clearInterval(interval)
+  }, [fetchQueue])
 
   async function handleAddStudent(data: { firstName: string; lastName: string }) {
     const response = await fetch(`/api/classrooms/${classroomId}/students`, {
@@ -117,6 +152,46 @@ export default function StudentList({ classroomId }: Props) {
     return result
   }
 
+  async function handleManualCheckInOut(studentId: string) {
+    const isOut = checkedOutStudents.has(studentId)
+    const action = isOut ? 'in' : 'out'
+
+    setProcessingCheckIn(studentId)
+    setError('')
+
+    try {
+      const response = await fetch(`/api/classroom/${classroomId}/checkin`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          studentId,
+          action,
+          manualOverride: true
+        })
+      })
+
+      if (!response.ok) {
+        const result = await response.json()
+        throw new Error(result.error || 'Failed to update check-in status')
+      }
+
+      // Update local state
+      setCheckedOutStudents(prev => {
+        const next = new Set(prev)
+        if (action === 'out') {
+          next.add(studentId)
+        } else {
+          next.delete(studentId)
+        }
+        return next
+      })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update status')
+    } finally {
+      setProcessingCheckIn(null)
+    }
+  }
+
   function openAddModal() {
     setEditingStudent(null)
     setIsModalOpen(true)
@@ -152,6 +227,17 @@ export default function StudentList({ classroomId }: Props) {
       <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
         <h2 className="text-lg font-semibold text-gray-900">Students</h2>
         <div className="flex gap-2">
+          {students.length > 0 && (
+            <button
+              onClick={() => setIsQRModalOpen(true)}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md flex items-center gap-1"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h2M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+              </svg>
+              QR Cards
+            </button>
+          )}
           <button
             onClick={() => setIsCSVModalOpen(true)}
             className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md"
@@ -214,6 +300,9 @@ export default function StudentList({ classroomId }: Props) {
                   Name
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Card ID
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -222,34 +311,61 @@ export default function StudentList({ classroomId }: Props) {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {students.map(student => (
-                <tr key={student.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">
-                      {student.firstName} {student.lastName}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <code className="text-xs bg-gray-100 px-2 py-1 rounded text-gray-600">
-                      {student.cardId.slice(0, 8)}...
-                    </code>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                    <button
-                      onClick={() => openEditModal(student)}
-                      className="text-blue-600 hover:text-blue-800 font-medium mr-3"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => setDeleteConfirm(student.id)}
-                      className="text-red-600 hover:text-red-800 font-medium"
-                    >
-                      Remove
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {students.map(student => {
+                const isOut = checkedOutStudents.has(student.id)
+                const isProcessing = processingCheckIn === student.id
+
+                return (
+                  <tr key={student.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">
+                        {student.firstName} {student.lastName}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          isOut
+                            ? 'bg-amber-100 text-amber-800'
+                            : 'bg-green-100 text-green-800'
+                        }`}
+                      >
+                        {isOut ? 'Out' : 'In'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <code className="text-xs bg-gray-100 px-2 py-1 rounded text-gray-600">
+                        {student.cardId.slice(0, 8)}...
+                      </code>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                      <button
+                        onClick={() => handleManualCheckInOut(student.id)}
+                        disabled={isProcessing}
+                        className={`font-medium mr-3 ${
+                          isOut
+                            ? 'text-green-600 hover:text-green-800'
+                            : 'text-amber-600 hover:text-amber-800'
+                        } disabled:opacity-50`}
+                      >
+                        {isProcessing ? '...' : isOut ? 'Check In' : 'Check Out'}
+                      </button>
+                      <button
+                        onClick={() => openEditModal(student)}
+                        className="text-blue-600 hover:text-blue-800 font-medium mr-3"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => setDeleteConfirm(student.id)}
+                        className="text-red-600 hover:text-red-800 font-medium"
+                      >
+                        Remove
+                      </button>
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </div>
@@ -266,6 +382,13 @@ export default function StudentList({ classroomId }: Props) {
         isOpen={isCSVModalOpen}
         onClose={() => setIsCSVModalOpen(false)}
         onUpload={handleBulkUpload}
+      />
+
+      <QRCardsModal
+        isOpen={isQRModalOpen}
+        onClose={() => setIsQRModalOpen(false)}
+        students={students}
+        classroomName={classroomName}
       />
 
       {deleteConfirm && (
