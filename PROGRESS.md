@@ -21,14 +21,15 @@ Last Updated: 2026-01-11
 - [x] Classroom CRUD operations (API routes + UI components)
 - [x] Classroom list with create/edit/delete modals
 - [x] Dashboard with classroom management
+- [x] Classroom detail page (`/dashboard/classroom/[id]`)
+- [x] Student management (add, edit, remove from classroom)
+- [x] CSV bulk upload for students
+- [x] Student names encrypted at rest (FERPA compliance)
 
 ## In Progress
 
 ### Phase 2: Core Features (continued)
-- [ ] Student management (manual add)
-- [ ] CSV bulk upload for students
 - [ ] QR code generation for student cards
-- [ ] Student roster view
 
 ## Todo
 
@@ -65,13 +66,23 @@ src/
 │   │   │   ├── [...nextauth]/route.ts
 │   │   │   └── register/route.ts
 │   │   └── classrooms/
-│   │       ├── route.ts           # GET (list), POST (create)
-│   │       └── [id]/route.ts      # GET, PATCH, DELETE
-│   └── dashboard/page.tsx
+│   │       ├── route.ts                    # GET (list), POST (create)
+│   │       └── [id]/
+│   │           ├── route.ts                # GET, PATCH, DELETE classroom
+│   │           └── students/
+│   │               ├── route.ts            # GET (list), POST (add student)
+│   │               ├── [studentId]/route.ts # GET, PATCH, DELETE student
+│   │               └── bulk/route.ts       # POST (CSV bulk upload)
+│   └── dashboard/
+│       ├── page.tsx                        # Classroom list dashboard
+│       └── classroom/[id]/page.tsx         # Classroom detail with students
 ├── components/
 │   ├── ClassroomCard.tsx          # Classroom card with actions
 │   ├── ClassroomList.tsx          # Classroom grid with CRUD
-│   └── ClassroomModal.tsx         # Create/edit modal
+│   ├── ClassroomModal.tsx         # Create/edit classroom modal
+│   ├── StudentList.tsx            # Student table with CRUD
+│   ├── StudentModal.tsx           # Add/edit student modal
+│   └── CSVUploadModal.tsx         # CSV bulk upload modal
 ├── lib/
 │   ├── auth.ts          # NextAuth configuration
 │   ├── encryption.ts    # AES-256-GCM encryption
