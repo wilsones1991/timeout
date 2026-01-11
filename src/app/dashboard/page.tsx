@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { auth, signOut } from '@/lib/auth'
+import ClassroomList from '@/components/ClassroomList'
 
 export default async function DashboardPage() {
   const session = await auth()
@@ -37,17 +38,7 @@ export default async function DashboardPage() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white shadow rounded-lg p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            Your Classrooms
-          </h2>
-          <p className="text-gray-600 mb-6">
-            You don&apos;t have any classrooms yet. Create your first classroom to get started.
-          </p>
-          <button className="px-4 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700">
-            Create Classroom
-          </button>
-        </div>
+        <ClassroomList />
       </main>
     </div>
   )
