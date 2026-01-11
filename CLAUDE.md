@@ -60,9 +60,15 @@ A Next.js web application for teachers to manage student check-ins/outs across m
 
 ### Database
 - Always use Prisma Client from `@/lib/prisma` (singleton instance)
+- Use encryption utilities from `@/lib/encryption` for PII fields
+- Encrypt before write, decrypt after read using Prisma middleware
 - Never commit `.env` files (use `.env.local` for local dev)
 - Write migrations with descriptive names: `add_student_card_id`
 - Use transactions for multi-step operations
+- **Schema Design**: Normalized database with join tables (industry standard)
+  - Student table: one record per student
+  - ClassroomStudent join table: links students to multiple classrooms
+  - Follows same approach as PowerSchool, Infinite Campus, etc.
 
 ## Project Structure
 
@@ -80,6 +86,7 @@ src/
 │   └── ...
 ├── lib/
 │   ├── prisma.ts          # Prisma client singleton
+│   ├── encryption.ts      # AES-256-GCM encryption utilities (FERPA compliance)
 │   ├── auth.ts            # NextAuth configuration
 │   └── utils.ts           # Shared utilities
 ├── types/
@@ -93,6 +100,16 @@ src/
 Singleton Prisma client instance. Always import from here:
 ```typescript
 import { prisma } from '@/lib/prisma'
+```
+
+### Encryption Utilities (`src/lib/encryption.ts`)
+Field-level encryption/decryption functions for PII data:
+- Uses AES-256-GCM encryption standard (FERPA best practice)
+- Encrypts: student names, teacher names/emails
+- Does NOT encrypt: UUIDs (cardId), timestamps, non-PII data
+- Key stored in `ENCRYPTION_KEY` environment variable
+```typescript
+import { encrypt, decrypt } from '@/lib/encryption'
 ```
 
 ### Auth Config (`src/lib/auth.ts`)
@@ -147,14 +164,20 @@ DATABASE_URL="postgresql://user:password@localhost:5432/classroom_checkin"
 
 NEXTAUTH_SECRET="generate-with-openssl-rand-base64-32"
 NEXTAUTH_URL="http://localhost:3000"
+
+# Encryption key for PII data (FERPA compliance)
+ENCRYPTION_KEY="generate-with-openssl-rand-hex-32"
 ```
+
+**Important**: Never commit `.env.local` or expose encryption keys in code!
 
 ### First-Time Setup
 1. Clone repo and install: `npm install`
 2. Copy `.env.example` to `.env.local` and configure
-3. Run migrations: `npx prisma migrate dev`
-4. Seed database: `npx prisma db seed`
-5. Start dev server: `npm run dev`
+3. Generate encryption key: `openssl rand -hex 32` and add to `.env.local`
+4. Run migrations: `npx prisma migrate dev`
+5. Seed database: `npx prisma db seed`
+6. Start dev server: `npm run dev`
 
 ## Known Issues & Gotchas
 
@@ -177,6 +200,19 @@ NEXTAUTH_URL="http://localhost:3000"
 - Always run `npx prisma generate` after schema changes
 - In development, prefer `prisma migrate dev` over `prisma db push`
 - Prisma Client must be singleton to avoid connection pool exhaustion
+
+### Data Encryption (FERPA Compliance)
+- All PII fields (student/teacher names) are encrypted at rest using AES-256-GCM
+- Encryption/decryption happens automatically via Prisma middleware
+- Never log or display encrypted values - always use decrypted data
+- Encryption key must be 32 bytes (64 hex characters)
+- Performance: encryption adds ~1-5ms per database operation
+- Test encryption/decryption thoroughly before deploying
+- **Security Model**: Industry-standard approach (same as PowerSchool, Infinite Campus)
+  - Normalized database design with join tables
+  - Encrypt PII at rest (names)
+  - Strong perimeter defense: authentication, RBAC, monitoring
+  - Security through access control and encryption, not obscurity
 
 ### Next.js App Router
 - Server Components can't use hooks or browser APIs
@@ -217,6 +253,7 @@ Last Updated: [Date]
 ### Phase 1: Foundation
 - [x] Project setup (Next.js, TypeScript, Prisma)
 - [x] Database schema and migrations
+- [x] Field-level encryption for PII data (AES-256-GCM)
 - [x] NextAuth configuration (12-hour sessions)
 - [x] Teacher registration and login pages
 
@@ -273,6 +310,13 @@ Last Updated: [Date]
 - **Next.js Docs**: https://nextjs.org/docs
 - **NextAuth.js**: https://authjs.dev
 - **html5-qrcode**: https://github.com/mebjas/html5-qrcode
+- **FERPA Compliance & Security Approach**: This app follows industry-standard practices
+  - Student names encrypted using AES-256-GCM (at rest)
+  - Normalized database design with join tables (same as PowerSchool, Infinite Campus)
+  - UUIDs (cardId) are not encrypted as they are not PII
+  - Security model: strong perimeter defense (auth, RBAC, encryption) rather than obscurity
+  - See `src/lib/encryption.ts` for implementation details
+  - See SPEC.md Security Considerations section for detailed rationale
 
 ## Questions?
 

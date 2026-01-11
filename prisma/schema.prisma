@@ -1,0 +1,78 @@
+// Prisma schema for Classroom Check-In/Out System
+// See SPEC.md for complete data model documentation
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// User (Teacher) model
+model User {
+  id           String      @id @default(cuid())
+  email        String      @unique
+  name         String?     // Encrypted at rest
+  passwordHash String
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  classrooms   Classroom[]
+}
+
+// Classroom model
+model Classroom {
+  id        String             @id @default(cuid())
+  name      String
+  teacherId String
+  teacher   User               @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  isActive  Boolean            @default(true)
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+  students  ClassroomStudent[]
+  checkIns  CheckIn[]
+}
+
+// Student model
+// Names are encrypted at rest for FERPA compliance
+model Student {
+  id         String             @id @default(cuid())
+  firstName  String             // Encrypted at rest
+  lastName   String             // Encrypted at rest
+  cardId     String             @unique @default(cuid()) // UUID for QR code (not encrypted - not PII)
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
+  classrooms ClassroomStudent[]
+  checkIns   CheckIn[]
+}
+
+// Join table for many-to-many relationship between Student and Classroom
+model ClassroomStudent {
+  id          String    @id @default(cuid())
+  studentId   String
+  student     Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  classroomId String
+  classroom   Classroom @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+  enrolledAt  DateTime  @default(now())
+
+  @@unique([studentId, classroomId])
+  @@index([classroomId])
+  @@index([studentId])
+}
+
+// CheckIn/CheckOut record model
+model CheckIn {
+  id             String    @id @default(cuid())
+  studentId      String
+  student        Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  classroomId    String
+  classroom      Classroom @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+  checkOutAt     DateTime  @default(now())
+  checkInAt      DateTime? // Null if still checked out
+  manualOverride Boolean   @default(false) // True if teacher manually adjusted
+  createdAt      DateTime  @default(now())
+
+  @@index([classroomId, checkInAt])
+  @@index([studentId])
+}
