@@ -31,7 +31,7 @@ export default function DestinationManager({ classroomId }: Props) {
   useEffect(() => {
     async function loadDestinations() {
       try {
-        const response = await fetch(`/api/classrooms/${classroomId}/destinations`)
+        const response = await fetch(`/api/admin/classrooms/${classroomId}/destinations`)
         if (response.ok) {
           const data = await response.json()
           setDestinations(data.destinations)
@@ -54,7 +54,7 @@ export default function DestinationManager({ classroomId }: Props) {
 
     try {
       const capacity = newCapacity ? parseInt(newCapacity, 10) : null
-      const response = await fetch(`/api/classrooms/${classroomId}/destinations`, {
+      const response = await fetch(`/api/admin/classrooms/${classroomId}/destinations`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -83,7 +83,7 @@ export default function DestinationManager({ classroomId }: Props) {
     setError(null)
 
     try {
-      const response = await fetch(`/api/classrooms/${classroomId}/destinations/${destId}`, {
+      const response = await fetch(`/api/admin/classrooms/${classroomId}/destinations/${destId}`, {
         method: 'DELETE'
       })
 
@@ -113,7 +113,7 @@ export default function DestinationManager({ classroomId }: Props) {
 
     try {
       const capacity = editCapacity ? parseInt(editCapacity, 10) : null
-      const response = await fetch(`/api/classrooms/${classroomId}/destinations/${destId}`, {
+      const response = await fetch(`/api/admin/classrooms/${classroomId}/destinations/${destId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

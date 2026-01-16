@@ -4,9 +4,7 @@ import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import StudentList from '@/components/StudentList'
 import DestinationManager from '@/components/DestinationManager'
-import WaitListManager from '@/components/WaitListManager'
 import WaitListWidgetButton from '@/components/WaitListWidgetButton'
-import KioskModeGuard from '@/components/KioskModeGuard'
 
 type Props = {
   params: Promise<{ id: string }>
@@ -37,8 +35,7 @@ export default async function ClassroomPage({ params }: Props) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <KioskModeGuard />
+    <>
       <header className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
@@ -89,6 +86,6 @@ export default async function ClassroomPage({ params }: Props) {
         <StudentList classroomId={id} classroomName={classroom.name} />
         <DestinationManager classroomId={id} />
       </main>
-    </div>
+    </>
   )
 }

@@ -2,7 +2,6 @@ import { redirect } from 'next/navigation'
 import { auth, signOut } from '@/lib/auth'
 import ClassroomList from '@/components/ClassroomList'
 import DashboardHeader from '@/components/DashboardHeader'
-import KioskModeGuard from '@/components/KioskModeGuard'
 
 async function handleSignOut() {
   'use server'
@@ -17,8 +16,7 @@ export default async function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <KioskModeGuard />
+    <>
       <DashboardHeader
         userName={session.user.name || session.user.email || 'User'}
         onSignOut={handleSignOut}
@@ -27,6 +25,6 @@ export default async function DashboardPage() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <ClassroomList />
       </main>
-    </div>
+    </>
   )
 }

@@ -2,6 +2,7 @@ import { cookies } from 'next/headers'
 import crypto from 'crypto'
 
 const COOKIE_NAME = 'kiosk-mode'
+const INDICATOR_COOKIE_NAME = 'kiosk-active' // Client-readable indicator (non-httpOnly)
 const COOKIE_MAX_AGE = 60 * 60 * 12 // 12 hours (matches session duration)
 
 /**
@@ -66,8 +67,18 @@ export async function setKioskMode(): Promise<void> {
   const cookieStore = await cookies()
   const signedValue = createSignedValue()
 
+  // Secure signed cookie (httpOnly - server verification)
   cookieStore.set(COOKIE_NAME, signedValue, {
     httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: COOKIE_MAX_AGE,
+    path: '/',
+  })
+
+  // Client-readable indicator cookie (for instant client-side detection)
+  cookieStore.set(INDICATOR_COOKIE_NAME, '1', {
+    httpOnly: false,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
     maxAge: COOKIE_MAX_AGE,
@@ -82,6 +93,7 @@ export async function setKioskMode(): Promise<void> {
 export async function clearKioskMode(): Promise<void> {
   const cookieStore = await cookies()
   cookieStore.delete(COOKIE_NAME)
+  cookieStore.delete(INDICATOR_COOKIE_NAME)
 }
 
 /**
@@ -112,3 +124,4 @@ export function isKioskModeActiveSync(cookieValue: string | undefined): boolean 
 }
 
 export const KIOSK_COOKIE_NAME = COOKIE_NAME
+export const KIOSK_INDICATOR_COOKIE_NAME = INDICATOR_COOKIE_NAME

@@ -59,7 +59,7 @@ export default function StudentList({ classroomId, classroomName }: Props) {
 
   const fetchStudents = useCallback(async () => {
     try {
-      const response = await fetch(`/api/classrooms/${classroomId}/students`)
+      const response = await fetch(`/api/admin/classrooms/${classroomId}/students`)
       const data = await response.json()
 
       if (!response.ok) {
@@ -147,7 +147,7 @@ export default function StudentList({ classroomId, classroomName }: Props) {
   }, [fetchQueue, fetchWaitlist, fetchDestinations])
 
   async function handleAddStudent(data: { firstName: string; lastName: string }) {
-    const response = await fetch(`/api/classrooms/${classroomId}/students`, {
+    const response = await fetch(`/api/admin/classrooms/${classroomId}/students`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
@@ -165,7 +165,7 @@ export default function StudentList({ classroomId, classroomName }: Props) {
     if (!editingStudent) return
 
     const response = await fetch(
-      `/api/classrooms/${classroomId}/students/${editingStudent.id}`,
+      `/api/admin/classrooms/${classroomId}/students/${editingStudent.id}`,
       {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -184,7 +184,7 @@ export default function StudentList({ classroomId, classroomName }: Props) {
   async function handleDeleteStudent(studentId: string) {
     try {
       const response = await fetch(
-        `/api/classrooms/${classroomId}/students/${studentId}`,
+        `/api/admin/classrooms/${classroomId}/students/${studentId}`,
         { method: 'DELETE' }
       )
 
@@ -201,7 +201,7 @@ export default function StudentList({ classroomId, classroomName }: Props) {
   }
 
   async function handleBulkUpload(studentData: { firstName: string; lastName: string }[]) {
-    const response = await fetch(`/api/classrooms/${classroomId}/students/bulk`, {
+    const response = await fetch(`/api/admin/classrooms/${classroomId}/students/bulk`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ students: studentData })

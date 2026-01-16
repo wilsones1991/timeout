@@ -38,7 +38,7 @@ export default function WaitListManager({ classroomId }: Props) {
   const loadStudentsAndDestinations = useCallback(async () => {
     try {
       // Fetch students
-      const studentsRes = await fetch(`/api/classrooms/${classroomId}/students`)
+      const studentsRes = await fetch(`/api/admin/classrooms/${classroomId}/students`)
       if (studentsRes.ok) {
         const data = await studentsRes.json()
         setStudents(data.students || [])

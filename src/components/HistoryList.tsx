@@ -40,7 +40,7 @@ export default function HistoryList({ classroomId }: Props) {
       if (dateTo) params.set('dateTo', dateTo)
 
       const response = await fetch(
-        `/api/classroom/${classroomId}/history?${params}`
+        `/api/admin/classroom/${classroomId}/history?${params}`
       )
       const data = await response.json()
 

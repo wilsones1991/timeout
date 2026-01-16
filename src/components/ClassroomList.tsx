@@ -23,7 +23,7 @@ export default function ClassroomList() {
 
   const fetchClassrooms = useCallback(async () => {
     try {
-      const response = await fetch('/api/classrooms')
+      const response = await fetch('/api/admin/classrooms')
       const data = await response.json()
 
       if (!response.ok) {
@@ -43,7 +43,7 @@ export default function ClassroomList() {
   }, [fetchClassrooms])
 
   async function handleCreate(data: { name: string }) {
-    const response = await fetch('/api/classrooms', {
+    const response = await fetch('/api/admin/classrooms', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
@@ -60,7 +60,7 @@ export default function ClassroomList() {
   async function handleUpdate(data: { name: string; isActive?: boolean }) {
     if (!editingClassroom) return
 
-    const response = await fetch(`/api/classrooms/${editingClassroom.id}`, {
+    const response = await fetch(`/api/admin/classrooms/${editingClassroom.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
@@ -76,7 +76,7 @@ export default function ClassroomList() {
 
   async function handleDelete(id: string) {
     try {
-      const response = await fetch(`/api/classrooms/${id}`, {
+      const response = await fetch(`/api/admin/classrooms/${id}`, {
         method: 'DELETE'
       })
 
