@@ -24,3 +24,11 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Cursor pointer for all interactive elements */
+button, a, [role="button"], input[type="submit"], input[type="button"], select {
+  cursor: pointer;
+}
+button:disabled, input:disabled, select:disabled {
+  cursor: not-allowed;
+}
