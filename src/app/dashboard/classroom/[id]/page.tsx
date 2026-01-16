@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import StudentList from '@/components/StudentList'
+import DestinationManager from '@/components/DestinationManager'
 
 type Props = {
   params: Promise<{ id: string }>
@@ -79,8 +80,9 @@ export default async function ClassroomPage({ params }: Props) {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         <StudentList classroomId={id} classroomName={classroom.name} />
+        <DestinationManager classroomId={id} />
       </main>
     </div>
   )

@@ -44,6 +44,7 @@ export async function GET(request: Request, { params }: RouteParams) {
       studentId: checkIn.studentId,
       studentName: `${decrypt(checkIn.student.firstName)} ${decrypt(checkIn.student.lastName)}`,
       checkOutAt: checkIn.checkOutAt.toISOString(),
+      destination: checkIn.destination,
       durationMinutes: Math.floor((now.getTime() - checkIn.checkOutAt.getTime()) / 60000)
     }))
 

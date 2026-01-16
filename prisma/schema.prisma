@@ -16,6 +16,7 @@ model User {
   email        String      @unique
   name         String?     // Encrypted at rest
   passwordHash String
+  pinHash      String?     // Optional hashed PIN for kiosk lock
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
   classrooms   Classroom[]
@@ -23,15 +24,16 @@ model User {
 
 // Classroom model
 model Classroom {
-  id        String             @id @default(cuid())
-  name      String
-  teacherId String
-  teacher   User               @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-  isActive  Boolean            @default(true)
-  createdAt DateTime           @default(now())
-  updatedAt DateTime           @updatedAt
-  students  ClassroomStudent[]
-  checkIns  CheckIn[]
+  id           String             @id @default(cuid())
+  name         String
+  teacherId    String
+  teacher      User               @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  isActive     Boolean            @default(true)
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  students     ClassroomStudent[]
+  checkIns     CheckIn[]
+  destinations Destination[]
 }
 
 // Student model
@@ -70,9 +72,24 @@ model CheckIn {
   classroom      Classroom @relation(fields: [classroomId], references: [id], onDelete: Cascade)
   checkOutAt     DateTime  @default(now())
   checkInAt      DateTime? // Null if still checked out
+  destination    String?   // Where student went (e.g., "Bathroom", "Office")
   manualOverride Boolean   @default(false) // True if teacher manually adjusted
   createdAt      DateTime  @default(now())
 
   @@index([classroomId, checkInAt])
   @@index([studentId])
+}
+
+// Destination model for checkout locations
+model Destination {
+  id          String    @id @default(cuid())
+  classroomId String
+  classroom   Classroom @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+  name        String
+  sortOrder   Int       @default(0)
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+
+  @@unique([classroomId, name])
+  @@index([classroomId])
 }

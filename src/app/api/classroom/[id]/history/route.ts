@@ -78,6 +78,7 @@ export async function GET(request: Request, { params }: RouteParams) {
       studentName: `${decrypt(record.student.firstName)} ${decrypt(record.student.lastName)}`,
       checkOutAt: record.checkOutAt.toISOString(),
       checkInAt: record.checkInAt?.toISOString() || null,
+      destination: record.destination,
       durationMinutes: record.checkInAt
         ? Math.floor((record.checkInAt.getTime() - record.checkOutAt.getTime()) / 60000)
         : null,

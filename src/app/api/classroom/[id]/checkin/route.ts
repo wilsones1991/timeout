@@ -25,7 +25,7 @@ export async function POST(request: Request, { params }: RouteParams) {
     }
 
     const body = await request.json()
-    const { studentId, action, manualOverride } = body
+    const { studentId, action, destination, manualOverride } = body
 
     if (!studentId || !action) {
       return NextResponse.json(
@@ -37,6 +37,14 @@ export async function POST(request: Request, { params }: RouteParams) {
     if (action !== 'in' && action !== 'out') {
       return NextResponse.json(
         { error: 'Action must be "in" or "out"' },
+        { status: 400 }
+      )
+    }
+
+    // Destination is required for checkout (unless manual override from teacher dashboard)
+    if (action === 'out' && !destination && !manualOverride) {
+      return NextResponse.json(
+        { error: 'Destination is required for checkout' },
         { status: 400 }
       )
     }
@@ -81,6 +89,7 @@ export async function POST(request: Request, { params }: RouteParams) {
         data: {
           studentId,
           classroomId,
+          destination: destination || null,
           manualOverride: manualOverride || false
         }
       })
@@ -123,6 +132,7 @@ export async function POST(request: Request, { params }: RouteParams) {
       studentId: checkIn.studentId,
       studentName: `${decrypt(checkIn.student.firstName)} ${decrypt(checkIn.student.lastName)}`,
       checkOutAt: checkIn.checkOutAt.toISOString(),
+      destination: checkIn.destination,
       durationMinutes: Math.floor((now.getTime() - checkIn.checkOutAt.getTime()) / 60000)
     }))
 

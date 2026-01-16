@@ -5,6 +5,11 @@ import { decrypt } from '@/lib/encryption'
 
 type RouteParams = { params: Promise<{ id: string }> }
 
+const DEFAULT_DESTINATIONS = [
+  { name: 'Bathroom', sortOrder: 0 },
+  { name: 'Office', sortOrder: 1 },
+]
+
 // GET /api/classroom/[id]/kiosk - Get classroom info and queue for kiosk
 export async function GET(request: Request, { params }: RouteParams) {
   try {
@@ -22,6 +27,26 @@ export async function GET(request: Request, { params }: RouteParams) {
 
     if (!classroom) {
       return NextResponse.json({ error: 'Classroom not found' }, { status: 404 })
+    }
+
+    // Get destinations (auto-create defaults if none exist)
+    let destinations = await prisma.destination.findMany({
+      where: { classroomId, isActive: true },
+      orderBy: { sortOrder: 'asc' }
+    })
+
+    if (destinations.length === 0) {
+      await prisma.destination.createMany({
+        data: DEFAULT_DESTINATIONS.map(d => ({
+          ...d,
+          classroomId
+        }))
+      })
+
+      destinations = await prisma.destination.findMany({
+        where: { classroomId, isActive: true },
+        orderBy: { sortOrder: 'asc' }
+      })
     }
 
     // Get students currently checked out (no check-in time)
@@ -44,6 +69,7 @@ export async function GET(request: Request, { params }: RouteParams) {
       studentId: checkIn.studentId,
       studentName: `${decrypt(checkIn.student.firstName)} ${decrypt(checkIn.student.lastName)}`,
       checkOutAt: checkIn.checkOutAt.toISOString(),
+      destination: checkIn.destination,
       durationMinutes: Math.floor((now.getTime() - checkIn.checkOutAt.getTime()) / 60000)
     }))
 
@@ -52,6 +78,10 @@ export async function GET(request: Request, { params }: RouteParams) {
         id: classroom.id,
         name: classroom.name
       },
+      destinations: destinations.map(d => ({
+        id: d.id,
+        name: d.name
+      })),
       queue
     })
   } catch (error) {

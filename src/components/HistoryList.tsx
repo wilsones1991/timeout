@@ -8,6 +8,7 @@ type HistoryRecord = {
   studentName: string
   checkOutAt: string
   checkInAt: string | null
+  destination: string | null
   durationMinutes: number | null
   manualOverride: boolean
   isActive: boolean
@@ -204,6 +205,9 @@ export default function HistoryList({ classroomId }: Props) {
                     Date
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Destination
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Out
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -227,6 +231,9 @@ export default function HistoryList({ classroomId }: Props) {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {formatDate(record.checkOutAt)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {record.destination || '—'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {formatTime(record.checkOutAt)}
