@@ -179,7 +179,7 @@ export default function DestinationManager({ classroomId }: Props) {
                     value={editCapacity}
                     onChange={(e) => setEditCapacity(e.target.value)}
                     placeholder="Unlimited"
-                    className="w-24 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="text-black w-24 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                   <button
                     onClick={() => saveCapacity(dest.id)}
@@ -209,7 +209,7 @@ export default function DestinationManager({ classroomId }: Props) {
                   ) : (
                     <button
                       onClick={() => startEdit(dest)}
-                      className="text-gray-400 hover:text-gray-600"
+                      className="text-gray-600 hover:text-black"
                     >
                       + Set limit
                     </button>
