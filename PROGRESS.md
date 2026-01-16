@@ -1,6 +1,6 @@
 # Development Progress
 
-Last Updated: 2026-01-11
+Last Updated: 2026-01-14
 
 ## Completed
 
@@ -63,6 +63,25 @@ Last Updated: 2026-01-11
   - Shows student, date, out time, in time, duration
   - Indicates manual vs scan check-ins
   - Pagination with "Load More"
+- [x] Global cursor pointer CSS for all interactive elements
+- [x] Account-level PIN for kiosk protection
+  - PIN utilities (`src/lib/pin.ts`) - validate, hash, verify
+  - PIN API routes (`/api/user/pin/*`) - set, delete, verify, status
+  - PinEntryModal - touch-friendly numeric keypad (dark theme)
+  - PinSetupModal - enter/confirm flow with remove option
+  - Settings gear icon in dashboard header
+- [x] Kiosk lock/unlock and back button
+  - Back button (left) - returns to dashboard (PIN protected if set)
+  - Lock button (right) - enters locked state
+  - Full-screen lock overlay with unlock button
+  - PIN entry required if PIN is set, otherwise immediate unlock/exit
+
+### Additional Features
+- Wait List for bathrooms specifically
+- Sorting and filtering students
+- Buttons still don't all have cursor pointer
+- Make "check in" and "check out" language more natural
+
 
 ## In Progress
 
@@ -98,14 +117,18 @@ src/
 │   │   │   ├── kiosk/route.ts         # GET kiosk initialization
 │   │   │   ├── lookup/route.ts        # GET student by cardId
 │   │   │   └── queue/route.ts         # GET current queue
-│   │   └── classrooms/
-│   │       ├── route.ts               # GET (list), POST (create)
-│   │       └── [id]/
-│   │           ├── route.ts           # GET, PATCH, DELETE classroom
-│   │           └── students/
-│   │               ├── route.ts       # GET (list), POST (add student)
-│   │               ├── [studentId]/route.ts # GET, PATCH, DELETE student
-│   │               └── bulk/route.ts  # POST (CSV bulk upload)
+│   │   ├── classrooms/
+│   │   │   ├── route.ts               # GET (list), POST (create)
+│   │   │   └── [id]/
+│   │   │       ├── route.ts           # GET, PATCH, DELETE classroom
+│   │   │       └── students/
+│   │   │           ├── route.ts       # GET (list), POST (add student)
+│   │   │           ├── [studentId]/route.ts # GET, PATCH, DELETE student
+│   │   │           └── bulk/route.ts  # POST (CSV bulk upload)
+│   │   └── user/pin/
+│   │       ├── route.ts               # POST (set), DELETE (remove) PIN
+│   │       ├── verify/route.ts        # POST verify PIN
+│   │       └── status/route.ts        # GET PIN status
 │   ├── classroom/[id]/
 │   │   └── checkin/page.tsx           # Student kiosk interface
 │   └── dashboard/
@@ -118,7 +141,10 @@ src/
 │   ├── ClassroomList.tsx          # Classroom grid with CRUD
 │   ├── ClassroomModal.tsx         # Create/edit classroom modal
 │   ├── CSVUploadModal.tsx         # CSV bulk upload modal
+│   ├── DashboardHeader.tsx        # Dashboard header with settings
 │   ├── HistoryList.tsx            # Check-in/out history table
+│   ├── PinEntryModal.tsx          # Touch-friendly PIN entry keypad
+│   ├── PinSetupModal.tsx          # PIN setup with confirm flow
 │   ├── QRCardsModal.tsx           # QR code card generation and PDF export
 │   ├── QRScanner.tsx              # Webcam QR code scanner
 │   ├── StudentList.tsx            # Student table with CRUD + status
@@ -126,6 +152,7 @@ src/
 ├── lib/
 │   ├── auth.ts          # NextAuth configuration
 │   ├── encryption.ts    # AES-256-GCM encryption
+│   ├── pin.ts           # PIN validation, hashing, verification
 │   ├── prisma.ts        # Prisma client singleton
 │   ├── qrcode.ts        # QR code generation utilities
 │   └── utils.ts         # Password hashing, helpers
