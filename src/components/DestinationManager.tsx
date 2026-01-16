@@ -24,6 +24,10 @@ export default function DestinationManager({ classroomId }: Props) {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editCapacity, setEditCapacity] = useState('')
 
+  // Check if any destination already has a capacity limit (waiting room)
+  const destinationWithCapacity = destinations.find(d => d.capacity !== null)
+  const hasWaitingRoom = !!destinationWithCapacity
+
   useEffect(() => {
     async function loadDestinations() {
       try {
@@ -152,7 +156,11 @@ export default function DestinationManager({ classroomId }: Props) {
       </h3>
       <p className="text-sm text-gray-600 mb-4">
         Students will select one of these destinations when checking out.
-        Set a capacity limit to enable wait lists.
+        {hasWaitingRoom ? (
+          <> The <strong>{destinationWithCapacity?.name}</strong> destination has a waiting room enabled.</>
+        ) : (
+          <> Set a capacity limit on one destination to enable a waiting room.</>
+        )}
       </p>
 
       {error && (
@@ -198,7 +206,9 @@ export default function DestinationManager({ classroomId }: Props) {
                 <div className="mt-1 text-sm text-gray-500">
                   {dest.capacity ? (
                     <span className="inline-flex items-center gap-1">
-                      <span className="text-amber-600 font-medium">Limit: {dest.capacity}</span>
+                      <span className="text-amber-600 font-medium">
+                        Waiting room (limit: {dest.capacity})
+                      </span>
                       <button
                         onClick={() => startEdit(dest)}
                         className="text-blue-600 hover:text-blue-800"
@@ -206,12 +216,16 @@ export default function DestinationManager({ classroomId }: Props) {
                         (edit)
                       </button>
                     </span>
+                  ) : hasWaitingRoom ? (
+                    <span className="text-gray-400 italic">
+                      No waiting room
+                    </span>
                   ) : (
                     <button
                       onClick={() => startEdit(dest)}
-                      className="text-gray-600 hover:text-black"
+                      className="text-blue-600 hover:text-blue-800"
                     >
-                      + Set limit
+                      + Add waiting room
                     </button>
                   )}
                 </div>
@@ -245,14 +259,16 @@ export default function DestinationManager({ classroomId }: Props) {
             placeholder="New destination name"
             className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           />
-          <input
-            type="number"
-            min="0"
-            value={newCapacity}
-            onChange={(e) => setNewCapacity(e.target.value)}
-            placeholder="Limit"
-            className="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          />
+          {!hasWaitingRoom && (
+            <input
+              type="number"
+              min="1"
+              value={newCapacity}
+              onChange={(e) => setNewCapacity(e.target.value)}
+              placeholder="Limit"
+              className="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          )}
           <button
             type="submit"
             disabled={!newName.trim() || isAdding}
@@ -262,7 +278,9 @@ export default function DestinationManager({ classroomId }: Props) {
           </button>
         </div>
         <p className="text-xs text-gray-500">
-          Leave limit empty for unlimited. Set to 1 for single-student destinations like bathroom.
+          {hasWaitingRoom
+            ? `Only one destination can have a waiting room. Remove the limit from "${destinationWithCapacity?.name}" to set it elsewhere.`
+            : 'Set a limit (e.g., 1 for bathroom) to enable a waiting room for that destination.'}
         </p>
       </form>
     </div>

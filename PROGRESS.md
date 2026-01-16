@@ -91,6 +91,7 @@ Last Updated: 2026-01-14
 
 - Allow teacher to add students to wait list in the wait list manager.
 - Add confirmation prompts to destructive actions
+- Need to be able to delete history rows
 
 ## Known Issues
 - None currently

@@ -89,6 +89,25 @@ export async function POST(request: Request, { params }: RouteParams) {
         ? capacity
         : null
 
+    // Check if trying to set capacity when another destination already has one
+    // Only one destination per classroom can have a capacity limit (waiting room)
+    if (parsedCapacity !== null) {
+      const existingWithCapacity = await prisma.destination.findFirst({
+        where: {
+          classroomId,
+          isActive: true,
+          capacity: { not: null }
+        }
+      })
+
+      if (existingWithCapacity) {
+        return NextResponse.json(
+          { error: `Only one destination can have a waiting room. "${existingWithCapacity.name}" already has a capacity limit.` },
+          { status: 400 }
+        )
+      }
+    }
+
     // Get the highest sortOrder
     const maxSortOrder = await prisma.destination.aggregate({
       where: { classroomId },

@@ -64,6 +64,24 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       if (capacity === null || capacity === 0 || capacity === '') {
         updateData.capacity = null
       } else if (typeof capacity === 'number' && capacity > 0) {
+        // Check if another destination already has a capacity limit
+        // Only one destination per classroom can have a waiting room
+        const existingWithCapacity = await prisma.destination.findFirst({
+          where: {
+            classroomId,
+            isActive: true,
+            capacity: { not: null },
+            id: { not: destId } // Exclude current destination
+          }
+        })
+
+        if (existingWithCapacity) {
+          return NextResponse.json(
+            { error: `Only one destination can have a waiting room. "${existingWithCapacity.name}" already has a capacity limit.` },
+            { status: 400 }
+          )
+        }
+
         updateData.capacity = capacity
       }
     }

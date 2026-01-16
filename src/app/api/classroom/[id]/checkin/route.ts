@@ -79,7 +79,7 @@ export async function POST(request: Request, { params }: RouteParams) {
     }
 
     const body = await request.json()
-    const { studentId, action, destination, manualOverride } = body
+    const { studentId, action, destination, manualOverride, bypassWaitlist } = body
 
     if (!studentId || !action) {
       return NextResponse.json(
@@ -190,7 +190,7 @@ export async function POST(request: Request, { params }: RouteParams) {
           where: { classroomId, name: destination }
         }) : null
 
-        if (dest?.capacity) {
+        if (dest?.capacity && !bypassWaitlist) {
           // Count current checkouts for this destination
           const currentlyOut = await prisma.checkIn.count({
             where: {
