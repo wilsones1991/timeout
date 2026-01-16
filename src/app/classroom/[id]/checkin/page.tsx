@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, use } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import QRScanner from '@/components/QRScanner'
 import PinEntryModal from '@/components/PinEntryModal'
 import { useWaitlist } from '@/hooks/useWaitlist'
@@ -53,6 +53,8 @@ type Props = {
 export default function CheckInKioskPage({ params }: Props) {
   const { id: classroomId } = use(params)
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const isPopupMode = searchParams.get('popup') === 'true'
 
   // Waitlist data from shared hook
   const { entries: waitlistEntries, byDestination: waitlistByDestination } = useWaitlist(classroomId, { pollInterval: 5000 })
@@ -71,6 +73,16 @@ export default function CheckInKioskPage({ params }: Props) {
   const [showPinModal, setShowPinModal] = useState(false)
   const [pinAction, setPinAction] = useState<'lock' | 'unlock' | 'back' | null>(null)
   const [hasPin, setHasPin] = useState(false)
+
+  // Restore locked state from localStorage on mount
+  useEffect(() => {
+    const storageKey = `kiosk-locked-${classroomId}`
+    const savedLocked = localStorage.getItem(storageKey)
+    if (savedLocked === 'true') {
+      setIsLocked(true)
+      setScannerEnabled(false)
+    }
+  }, [classroomId])
 
   // Check if user has PIN set
   useEffect(() => {
@@ -281,10 +293,13 @@ export default function CheckInKioskPage({ params }: Props) {
     setScannerEnabled(true)
   }
 
+  const storageKey = `kiosk-locked-${classroomId}`
+
   function handleLockAttempt() {
     if (!hasPin) {
       setIsLocked(true)
       setScannerEnabled(false)
+      localStorage.setItem(storageKey, 'true')
       return
     }
     setPinAction('lock')
@@ -295,6 +310,7 @@ export default function CheckInKioskPage({ params }: Props) {
     if (!hasPin) {
       setIsLocked(false)
       setScannerEnabled(true)
+      localStorage.removeItem(storageKey)
       return
     }
     setPinAction('unlock')
@@ -303,7 +319,7 @@ export default function CheckInKioskPage({ params }: Props) {
 
   function handleBackAttempt() {
     if (!hasPin) {
-      router.push('/dashboard')
+      router.push(`/dashboard/classroom/${classroomId}`)
       return
     }
     setPinAction('back')
@@ -315,11 +331,13 @@ export default function CheckInKioskPage({ params }: Props) {
     if (pinAction === 'lock') {
       setIsLocked(true)
       setScannerEnabled(false)
+      localStorage.setItem(storageKey, 'true')
     } else if (pinAction === 'unlock') {
       setIsLocked(false)
       setScannerEnabled(true)
+      localStorage.removeItem(storageKey)
     } else if (pinAction === 'back') {
-      router.push('/dashboard')
+      router.push(`/dashboard/classroom/${classroomId}`)
     }
     setPinAction(null)
   }
@@ -604,15 +622,20 @@ export default function CheckInKioskPage({ params }: Props) {
   return (
     <div className="min-h-screen bg-gray-900 flex flex-col">
       <header className="p-4 border-b border-gray-800 flex items-center justify-between">
-        <button
-          onClick={handleBackAttempt}
-          className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg"
-          title="Back to Dashboard"
-        >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-          </svg>
-        </button>
+        {/* Hide back button in popup mode */}
+        {isPopupMode ? (
+          <div className="w-10" />
+        ) : (
+          <button
+            onClick={handleBackAttempt}
+            className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg"
+            title="Back to Dashboard"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+          </button>
+        )}
         <div className="text-center">
           <h1 className="text-2xl font-bold text-white">{classroom?.name}</h1>
           <p className="text-gray-400 text-sm">Scan your QR code to check in or out</p>

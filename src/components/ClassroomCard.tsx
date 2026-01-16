@@ -48,7 +48,13 @@ export default function ClassroomCard({ classroom, onEdit, onDelete }: Props) {
             href={`/dashboard/classroom/${classroom.id}`}
             className="flex-1 text-center px-3 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md"
           >
-            Open
+            Manage
+          </Link>
+          <Link
+            href={`/classroom/${classroom.id}/kiosk-launch`}
+            className="px-3 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-md"
+          >
+            Launch Kiosk
           </Link>
           <button
             onClick={() => onEdit(classroom)}

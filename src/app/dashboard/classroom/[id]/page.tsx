@@ -6,6 +6,7 @@ import StudentList from '@/components/StudentList'
 import DestinationManager from '@/components/DestinationManager'
 import WaitListManager from '@/components/WaitListManager'
 import WaitListWidgetButton from '@/components/WaitListWidgetButton'
+import KioskModeGuard from '@/components/KioskModeGuard'
 
 type Props = {
   params: Promise<{ id: string }>
@@ -37,6 +38,7 @@ export default async function ClassroomPage({ params }: Props) {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <KioskModeGuard />
       <header className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
@@ -70,13 +72,13 @@ export default async function ClassroomPage({ params }: Props) {
                 History
               </Link>
               <Link
-                href={`/classroom/${id}/checkin`}
-                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md flex items-center gap-2"
+                href={`/classroom/${id}/kiosk-launch`}
+                className="px-4 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-md flex items-center gap-2"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                 </svg>
-                Open Kiosk
+                Launch Kiosk
               </Link>
             </div>
           </div>
