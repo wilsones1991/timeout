@@ -1,17 +1,19 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import { useWaitlist, getWaitDuration } from '@/hooks/useWaitlist'
 
-type WaitListEntry = {
+type Student = {
   id: string
-  studentId: string
-  studentName: string
-  destinationId: string
-  destinationName: string
-  position: number
-  status: 'waiting' | 'approved'
-  createdAt: string
-  approvedAt: string | null
+  firstName: string
+  lastName: string
+}
+
+type Destination = {
+  id: string
+  name: string
+  capacity: number | null
+  currentCount: number
 }
 
 type Props = {
@@ -19,32 +21,58 @@ type Props = {
 }
 
 export default function WaitListManager({ classroomId }: Props) {
-  const [entries, setEntries] = useState<WaitListEntry[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const { entries, byDestination, isLoading, error: waitlistError, refresh } = useWaitlist(classroomId)
+
   const [error, setError] = useState<string | null>(null)
   const [actionInProgress, setActionInProgress] = useState<string | null>(null)
 
-  async function loadWaitlist() {
+  // Add student to waitlist state
+  const [showAddForm, setShowAddForm] = useState(false)
+  const [students, setStudents] = useState<Student[]>([])
+  const [destinations, setDestinations] = useState<Destination[]>([])
+  const [checkedOutStudentIds, setCheckedOutStudentIds] = useState<Set<string>>(new Set())
+  const [selectedStudentId, setSelectedStudentId] = useState('')
+  const [selectedDestinationId, setSelectedDestinationId] = useState('')
+  const [isAdding, setIsAdding] = useState(false)
+
+  const loadStudentsAndDestinations = useCallback(async () => {
     try {
-      const response = await fetch(`/api/classroom/${classroomId}/waitlist`)
-      if (response.ok) {
-        const data = await response.json()
-        setEntries(data.entries || [])
+      // Fetch students
+      const studentsRes = await fetch(`/api/classrooms/${classroomId}/students`)
+      if (studentsRes.ok) {
+        const data = await studentsRes.json()
+        setStudents(data.students || [])
+      }
+
+      // Fetch destinations and queue from kiosk endpoint
+      const kioskRes = await fetch(`/api/classroom/${classroomId}/kiosk`)
+      if (kioskRes.ok) {
+        const data = await kioskRes.json()
+        // Only include destinations with capacity limits
+        setDestinations(
+          (data.destinations || []).filter((d: Destination) => d.capacity !== null)
+        )
+        // Track which students are checked out
+        const checkedOut = new Set<string>(
+          (data.queue || []).map((q: { studentId: string }) => q.studentId)
+        )
+        setCheckedOutStudentIds(checkedOut)
       }
     } catch {
-      setError('Failed to load wait list')
-    } finally {
-      setIsLoading(false)
+      // Ignore errors - we'll just show empty lists
     }
-  }
+  }, [classroomId])
 
   useEffect(() => {
-    loadWaitlist()
+    loadStudentsAndDestinations()
 
     // Poll every 10 seconds
-    const interval = setInterval(loadWaitlist, 10000)
+    const interval = setInterval(loadStudentsAndDestinations, 10000)
     return () => clearInterval(interval)
-  }, [classroomId])
+  }, [loadStudentsAndDestinations])
+
+  // Combine errors
+  const displayError = error || waitlistError
 
   async function handleAction(entryId: string, action: 'skip' | 'remove' | 'approve') {
     setActionInProgress(entryId)
@@ -63,7 +91,7 @@ export default function WaitListManager({ classroomId }: Props) {
       }
 
       // Reload the list
-      await loadWaitlist()
+      await refresh()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to perform action')
     } finally {
@@ -71,21 +99,56 @@ export default function WaitListManager({ classroomId }: Props) {
     }
   }
 
-  // Group entries by destination
-  const byDestination = entries.reduce((acc, entry) => {
-    if (!acc[entry.destinationName]) {
-      acc[entry.destinationName] = []
+  async function handleAddStudent() {
+    if (!selectedStudentId || !selectedDestinationId) {
+      setError('Please select a student and destination')
+      return
     }
-    acc[entry.destinationName].push(entry)
-    return acc
-  }, {} as Record<string, WaitListEntry[]>)
 
-  function getWaitDuration(createdAt: string): string {
-    const minutes = Math.floor((Date.now() - new Date(createdAt).getTime()) / 60000)
-    if (minutes < 1) return 'Just now'
-    if (minutes === 1) return '1 min'
-    return `${minutes} min`
+    setIsAdding(true)
+    setError(null)
+
+    try {
+      const response = await fetch(`/api/classroom/${classroomId}/waitlist`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'add',
+          studentId: selectedStudentId,
+          destinationId: selectedDestinationId
+        })
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'Failed to add student to wait list')
+      }
+
+      // Reset form and reload
+      setSelectedStudentId('')
+      setSelectedDestinationId('')
+      setShowAddForm(false)
+      await refresh()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to add student')
+    } finally {
+      setIsAdding(false)
+    }
   }
+
+  // Get eligible students (not checked out and not already on waitlist for selected destination)
+  const waitlistStudentIds = new Set(
+    entries
+      .filter(e => e.destinationId === selectedDestinationId)
+      .map(e => e.studentId)
+  )
+
+  const eligibleStudents = students.filter(
+    s => !checkedOutStudentIds.has(s.id) && !waitlistStudentIds.has(s.id)
+  )
+
+  // Check if there's anyone out for a capacity-limited destination
+  const hasStudentOutForCapacityDestination = destinations.some(d => d.currentCount > 0)
 
   if (isLoading) {
     return (
@@ -101,13 +164,108 @@ export default function WaitListManager({ classroomId }: Props) {
 
   return (
     <div className="bg-white rounded-lg shadow p-6">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">
-        Wait List
-      </h3>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold text-gray-900">
+          Wait List
+        </h3>
+        {hasStudentOutForCapacityDestination && !showAddForm && (
+          <button
+            onClick={() => setShowAddForm(true)}
+            className="px-3 py-1.5 text-sm font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-md flex items-center gap-1"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Add to Wait List
+          </button>
+        )}
+      </div>
 
-      {error && (
+      {displayError && (
         <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-          {error}
+          {displayError}
+        </div>
+      )}
+
+      {showAddForm && (
+        <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="flex items-center justify-between mb-3">
+            <h4 className="font-medium text-gray-900">Add Student to Wait List</h4>
+            <button
+              onClick={() => {
+                setShowAddForm(false)
+                setSelectedStudentId('')
+                setSelectedDestinationId('')
+              }}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Destination
+              </label>
+              <select
+                value={selectedDestinationId}
+                onChange={(e) => {
+                  setSelectedDestinationId(e.target.value)
+                  setSelectedStudentId('') // Reset student when destination changes
+                }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="">Select destination...</option>
+                {destinations.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.name} ({d.currentCount}/{d.capacity})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Student
+              </label>
+              <select
+                value={selectedStudentId}
+                onChange={(e) => setSelectedStudentId(e.target.value)}
+                disabled={!selectedDestinationId}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+              >
+                <option value="">Select student...</option>
+                {eligibleStudents.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.firstName} {s.lastName}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={() => {
+                setShowAddForm(false)
+                setSelectedStudentId('')
+                setSelectedDestinationId('')
+              }}
+              className="px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleAddStudent}
+              disabled={isAdding || !selectedStudentId || !selectedDestinationId}
+              className="px-3 py-1.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isAdding ? 'Adding...' : 'Add to Wait List'}
+            </button>
+          </div>
         </div>
       )}
 

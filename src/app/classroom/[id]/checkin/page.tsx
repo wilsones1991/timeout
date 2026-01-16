@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, use } from 'react'
 import { useRouter } from 'next/navigation'
 import QRScanner from '@/components/QRScanner'
 import PinEntryModal from '@/components/PinEntryModal'
+import { useWaitlist } from '@/hooks/useWaitlist'
 
 type WaitlistStatus = {
   status: 'waiting' | 'approved'
@@ -52,6 +53,9 @@ type Props = {
 export default function CheckInKioskPage({ params }: Props) {
   const { id: classroomId } = use(params)
   const router = useRouter()
+
+  // Waitlist data from shared hook
+  const { entries: waitlistEntries, byDestination: waitlistByDestination } = useWaitlist(classroomId, { pollInterval: 5000 })
 
   const [classroom, setClassroom] = useState<ClassroomInfo | null>(null)
   const [student, setStudent] = useState<StudentInfo | null>(null)
@@ -638,8 +642,9 @@ export default function CheckInKioskPage({ params }: Props) {
           </div>
         </div>
 
-        {/* Queue Section */}
-        <div className="lg:w-80 bg-gray-800 border-t lg:border-t-0 lg:border-l border-gray-700">
+        {/* Queue & Waitlist Section */}
+        <div className="lg:w-80 bg-gray-800 border-t lg:border-t-0 lg:border-l border-gray-700 overflow-y-auto max-h-[40vh] lg:max-h-[calc(100vh-73px)]">
+          {/* Currently Out */}
           <div className="p-4 border-b border-gray-700">
             <h2 className="text-lg font-semibold text-white">
               Currently Out
@@ -649,7 +654,7 @@ export default function CheckInKioskPage({ params }: Props) {
             </h2>
           </div>
 
-          <div className="overflow-y-auto max-h-[40vh] lg:max-h-[calc(100vh-120px)]">
+          <div>
             {queue.length === 0 ? (
               <div className="p-4 text-center text-gray-500">
                 No students out
@@ -682,6 +687,62 @@ export default function CheckInKioskPage({ params }: Props) {
               </ul>
             )}
           </div>
+
+          {/* Wait List */}
+          {waitlistEntries.length > 0 && (
+            <>
+              <div className="p-4 border-t border-b border-gray-700 bg-gray-900/50">
+                <h2 className="text-lg font-semibold text-yellow-400">
+                  Wait List
+                  <span className="ml-2 text-sm font-normal text-gray-400">
+                    ({waitlistEntries.length})
+                  </span>
+                </h2>
+              </div>
+
+              <div>
+                {Object.entries(waitlistByDestination).map(([destination, destEntries]) => (
+                  <div key={destination}>
+                    <div className="px-4 py-2 bg-gray-700/50 text-sm font-medium text-gray-300">
+                      {destination}
+                    </div>
+                    <ul className="divide-y divide-gray-700">
+                      {destEntries.map(entry => (
+                        <li
+                          key={entry.id}
+                          className={`p-4 ${
+                            entry.status === 'approved'
+                              ? 'bg-green-900/30'
+                              : ''
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <span className={`w-7 h-7 flex items-center justify-center rounded-full text-sm font-bold ${
+                              entry.status === 'approved'
+                                ? 'bg-green-500 text-white'
+                                : 'bg-gray-600 text-gray-200'
+                            }`}>
+                              {entry.position}
+                            </span>
+                            <div className="flex-1">
+                              <div className="font-medium text-white">
+                                {entry.studentName}
+                              </div>
+                              {entry.status === 'approved' && (
+                                <div className="text-sm text-green-400 font-medium">
+                                  Ready to go!
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       </main>
 

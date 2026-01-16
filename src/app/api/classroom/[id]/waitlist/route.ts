@@ -80,8 +80,95 @@ export async function POST(request: Request, { params }: RouteParams) {
     }
 
     const body = await request.json()
-    const { action, entryId } = body
+    const { action, entryId, studentId, destinationId } = body
 
+    // Handle 'add' action separately since it doesn't require an entryId
+    if (action === 'add') {
+      if (!studentId || !destinationId) {
+        return NextResponse.json(
+          { error: 'studentId and destinationId are required for add action' },
+          { status: 400 }
+        )
+      }
+
+      // Verify the destination exists and belongs to this classroom
+      const destination = await prisma.destination.findFirst({
+        where: { id: destinationId, classroomId, isActive: true }
+      })
+
+      if (!destination) {
+        return NextResponse.json({ error: 'Destination not found' }, { status: 404 })
+      }
+
+      // Verify the student is in this classroom
+      const student = await prisma.classroomStudent.findFirst({
+        where: { classroomId, studentId }
+      })
+
+      if (!student) {
+        return NextResponse.json({ error: 'Student not found in classroom' }, { status: 404 })
+      }
+
+      // Check if student already has an active waitlist entry for this destination
+      const existingEntry = await prisma.waitListEntry.findFirst({
+        where: {
+          studentId,
+          classroomId,
+          destinationId,
+          status: { in: ['waiting', 'approved'] }
+        }
+      })
+
+      if (existingEntry) {
+        return NextResponse.json(
+          { error: 'Student is already on the wait list for this destination' },
+          { status: 400 }
+        )
+      }
+
+      // Check if student is currently checked out
+      const isCheckedOut = await prisma.checkIn.findFirst({
+        where: {
+          studentId,
+          classroomId,
+          checkInAt: null
+        }
+      })
+
+      if (isCheckedOut) {
+        return NextResponse.json(
+          { error: 'Student is currently checked out' },
+          { status: 400 }
+        )
+      }
+
+      // Get the next position for this destination
+      const maxPosition = await prisma.waitListEntry.aggregate({
+        where: {
+          classroomId,
+          destinationId,
+          status: { in: ['waiting', 'approved'] }
+        },
+        _max: { position: true }
+      })
+
+      const position = (maxPosition._max.position || 0) + 1
+
+      // Create the wait list entry
+      await prisma.waitListEntry.create({
+        data: {
+          studentId,
+          classroomId,
+          destinationId,
+          position,
+          status: 'waiting'
+        }
+      })
+
+      return NextResponse.json({ success: true })
+    }
+
+    // For other actions, entryId is required
     if (!action || !entryId) {
       return NextResponse.json(
         { error: 'Action and entryId are required' },

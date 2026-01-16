@@ -1,15 +1,7 @@
 'use client'
 
 import { useState, useEffect, use } from 'react'
-
-type WaitListEntry = {
-  id: string
-  studentName: string
-  destinationName: string
-  position: number
-  status: 'waiting' | 'approved'
-  createdAt: string
-}
+import { useWaitlist } from '@/hooks/useWaitlist'
 
 type Props = {
   params: Promise<{ id: string }>
@@ -17,41 +9,24 @@ type Props = {
 
 export default function WaitListWidgetPage({ params }: Props) {
   const { id: classroomId } = use(params)
-  const [entries, setEntries] = useState<WaitListEntry[]>([])
+  const { entries, byDestination, isLoading } = useWaitlist(classroomId, { pollInterval: 4000 })
   const [classroom, setClassroom] = useState<{ name: string } | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
 
+  // Fetch classroom name separately (the hook doesn't return it)
   useEffect(() => {
-    async function fetchData() {
+    async function fetchClassroom() {
       try {
         const response = await fetch(`/api/classroom/${classroomId}/waitlist`)
         if (response.ok) {
           const data = await response.json()
-          setEntries(data.entries || [])
           setClassroom(data.classroom)
         }
       } catch {
         // Ignore errors
-      } finally {
-        setIsLoading(false)
       }
     }
-
-    fetchData()
-
-    // Poll every 4 seconds
-    const interval = setInterval(fetchData, 4000)
-    return () => clearInterval(interval)
+    fetchClassroom()
   }, [classroomId])
-
-  // Group entries by destination
-  const byDestination = entries.reduce((acc, entry) => {
-    if (!acc[entry.destinationName]) {
-      acc[entry.destinationName] = []
-    }
-    acc[entry.destinationName].push(entry)
-    return acc
-  }, {} as Record<string, WaitListEntry[]>)
 
   if (isLoading) {
     return (
