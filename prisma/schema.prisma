@@ -24,29 +24,31 @@ model User {
 
 // Classroom model
 model Classroom {
-  id           String             @id @default(cuid())
-  name         String
-  teacherId    String
-  teacher      User               @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-  isActive     Boolean            @default(true)
-  createdAt    DateTime           @default(now())
-  updatedAt    DateTime           @updatedAt
-  students     ClassroomStudent[]
-  checkIns     CheckIn[]
-  destinations Destination[]
+  id              String             @id @default(cuid())
+  name            String
+  teacherId       String
+  teacher         User               @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  isActive        Boolean            @default(true)
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  students        ClassroomStudent[]
+  checkIns        CheckIn[]
+  destinations    Destination[]
+  waitListEntries WaitListEntry[]
 }
 
 // Student model
 // Names are encrypted at rest for FERPA compliance
 model Student {
-  id         String             @id @default(cuid())
-  firstName  String             // Encrypted at rest
-  lastName   String             // Encrypted at rest
-  cardId     String             @unique @default(cuid()) // UUID for QR code (not encrypted - not PII)
-  createdAt  DateTime           @default(now())
-  updatedAt  DateTime           @updatedAt
-  classrooms ClassroomStudent[]
-  checkIns   CheckIn[]
+  id              String             @id @default(cuid())
+  firstName       String             // Encrypted at rest
+  lastName        String             // Encrypted at rest
+  cardId          String             @unique @default(cuid()) // UUID for QR code (not encrypted - not PII)
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  classrooms      ClassroomStudent[]
+  checkIns        CheckIn[]
+  waitListEntries WaitListEntry[]
 }
 
 // Join table for many-to-many relationship between Student and Classroom
@@ -82,14 +84,34 @@ model CheckIn {
 
 // Destination model for checkout locations
 model Destination {
-  id          String    @id @default(cuid())
-  classroomId String
-  classroom   Classroom @relation(fields: [classroomId], references: [id], onDelete: Cascade)
-  name        String
-  sortOrder   Int       @default(0)
-  isActive    Boolean   @default(true)
-  createdAt   DateTime  @default(now())
+  id              String          @id @default(cuid())
+  classroomId     String
+  classroom       Classroom       @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+  name            String
+  sortOrder       Int             @default(0)
+  isActive        Boolean         @default(true)
+  capacity        Int?            // null = unlimited, 1+ = max students out at once
+  createdAt       DateTime        @default(now())
+  waitListEntries WaitListEntry[]
 
   @@unique([classroomId, name])
   @@index([classroomId])
+}
+
+// WaitListEntry model for students waiting for a destination
+model WaitListEntry {
+  id            String      @id @default(cuid())
+  studentId     String
+  student       Student     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  classroomId   String
+  classroom     Classroom   @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+  destinationId String
+  destination   Destination @relation(fields: [destinationId], references: [id], onDelete: Cascade)
+  position      Int         // Queue position (1 = first in line)
+  status        String      @default("waiting") // waiting, approved, checked_out, cancelled
+  createdAt     DateTime    @default(now())
+  approvedAt    DateTime?   // When promoted to approved status
+
+  @@index([classroomId, destinationId, status])
+  @@index([studentId, classroomId])
 }

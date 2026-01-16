@@ -89,7 +89,8 @@ Last Updated: 2026-01-14
 
 ## Todo
 
-(MVP Complete!)
+- Allow teacher to add students to wait list in the wait list manager.
+- Add confirmation prompts to destructive actions
 
 ## Known Issues
 - None currently

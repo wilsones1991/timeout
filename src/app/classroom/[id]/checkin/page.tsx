@@ -5,6 +5,13 @@ import { useRouter } from 'next/navigation'
 import QRScanner from '@/components/QRScanner'
 import PinEntryModal from '@/components/PinEntryModal'
 
+type WaitlistStatus = {
+  status: 'waiting' | 'approved'
+  destination: string
+  position: number
+  approvedAt: string | null
+}
+
 type StudentInfo = {
   id: string
   firstName: string
@@ -12,6 +19,7 @@ type StudentInfo = {
   cardId: string
   status: 'in' | 'out'
   checkOutTime?: string
+  waitlistStatus?: WaitlistStatus | null
 }
 
 type ClassroomInfo = {
@@ -31,6 +39,10 @@ type QueueItem = {
 type Destination = {
   id: string
   name: string
+  capacity: number | null
+  currentCount: number
+  approvedCount: number
+  waitlistCount: number
 }
 
 type Props = {
@@ -49,6 +61,7 @@ export default function CheckInKioskPage({ params }: Props) {
   const [isProcessing, setIsProcessing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [confirmation, setConfirmation] = useState<string | null>(null)
+  const [waitlistConfirmation, setWaitlistConfirmation] = useState<{ message: string; position: number } | null>(null)
   const [scannerEnabled, setScannerEnabled] = useState(true)
   const [isLocked, setIsLocked] = useState(false)
   const [showPinModal, setShowPinModal] = useState(false)
@@ -128,6 +141,18 @@ export default function CheckInKioskPage({ params }: Props) {
     }
   }, [confirmation])
 
+  // Auto-reset after showing waitlist confirmation
+  useEffect(() => {
+    if (waitlistConfirmation) {
+      const timer = setTimeout(() => {
+        setWaitlistConfirmation(null)
+        setStudent(null)
+        setScannerEnabled(true)
+      }, 4000)
+      return () => clearTimeout(timer)
+    }
+  }, [waitlistConfirmation])
+
   // Auto-reset after inactivity on student screen
   useEffect(() => {
     if (student && !isProcessing && !confirmation) {
@@ -189,7 +214,23 @@ export default function CheckInKioskPage({ params }: Props) {
 
       const data = await response.json()
       setQueue(data.queue || [])
-      setConfirmation(`${student.firstName} → ${destination}`)
+
+      // Check if added to waitlist
+      if (data.waitlisted) {
+        setWaitlistConfirmation({
+          message: `${student.firstName} added to waitlist for ${destination}`,
+          position: data.position
+        })
+      } else {
+        setConfirmation(`${student.firstName} → ${destination}`)
+      }
+
+      // Refresh destinations to update counts
+      const kioskResponse = await fetch(`/api/classroom/${classroomId}/kiosk`)
+      if (kioskResponse.ok) {
+        const kioskData = await kioskResponse.json()
+        setDestinations(kioskData.destinations || [])
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to process')
       setScannerEnabled(true)
@@ -333,9 +374,121 @@ export default function CheckInKioskPage({ params }: Props) {
     )
   }
 
+  // Waitlist confirmation screen
+  if (waitlistConfirmation) {
+    return (
+      <div className="min-h-screen bg-yellow-500 flex items-center justify-center p-4">
+        <div className="text-center text-white">
+          <svg className="h-24 w-24 mx-auto mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <h1 className="text-4xl font-bold mb-2">{waitlistConfirmation.message}</h1>
+          <p className="text-2xl mb-4">Position #{waitlistConfirmation.position}</p>
+          <p className="text-xl text-yellow-100">You will be notified when it is your turn</p>
+        </div>
+      </div>
+    )
+  }
+
   // Student action screen
   if (student) {
     const isOut = student.status === 'out'
+    const waitlistStatus = student.waitlistStatus
+
+    // Student is approved from waitlist - show approval screen
+    if (waitlistStatus?.status === 'approved') {
+      return (
+        <div className="min-h-screen bg-green-600 flex flex-col">
+          <header className="p-4 text-center">
+            <h1 className="text-2xl font-bold text-white">{classroom?.name}</h1>
+          </header>
+
+          <main className="flex-1 flex items-center justify-center p-4">
+            <div className="text-center text-white max-w-xl w-full">
+              <div className="mb-6">
+                <h2 className="text-4xl font-bold">
+                  {student.firstName} {student.lastName}
+                </h2>
+              </div>
+
+              <div className="mb-6 p-6 bg-white/20 rounded-2xl">
+                <p className="text-2xl font-bold mb-2">You are approved!</p>
+                <p className="text-xl">Ready to go to {waitlistStatus.destination}</p>
+              </div>
+
+              {error && (
+                <div className="mb-6 p-4 bg-red-500/50 rounded-lg text-white">
+                  {error}
+                </div>
+              )}
+
+              <button
+                onClick={() => handleCheckOut(waitlistStatus.destination)}
+                disabled={isProcessing}
+                className="w-full py-6 text-2xl font-bold rounded-2xl bg-white text-green-600 hover:bg-green-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isProcessing ? (
+                  <span className="flex items-center justify-center gap-3">
+                    <svg className="animate-spin h-6 w-6" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    Processing...
+                  </span>
+                ) : (
+                  `GO TO ${waitlistStatus.destination.toUpperCase()}`
+                )}
+              </button>
+
+              <button
+                onClick={handleCancel}
+                className="mt-4 text-white/80 hover:text-white text-lg"
+              >
+                Cancel
+              </button>
+            </div>
+          </main>
+        </div>
+      )
+    }
+
+    // Student is waiting in queue
+    if (waitlistStatus?.status === 'waiting') {
+      return (
+        <div className="min-h-screen bg-yellow-500 flex flex-col">
+          <header className="p-4 text-center">
+            <h1 className="text-2xl font-bold text-white">{classroom?.name}</h1>
+          </header>
+
+          <main className="flex-1 flex items-center justify-center p-4">
+            <div className="text-center text-white max-w-xl w-full">
+              <div className="mb-6">
+                <h2 className="text-4xl font-bold">
+                  {student.firstName} {student.lastName}
+                </h2>
+              </div>
+
+              <div className="mb-6 p-6 bg-white/20 rounded-2xl">
+                <p className="text-xl mb-2">Waiting for {waitlistStatus.destination}</p>
+                <p className="text-5xl font-bold">#{waitlistStatus.position}</p>
+                <p className="text-lg mt-2">in line</p>
+              </div>
+
+              <p className="text-lg text-yellow-100 mb-6">
+                You will be notified when it is your turn
+              </p>
+
+              <button
+                onClick={handleCancel}
+                className="text-white/80 hover:text-white text-lg"
+              >
+                Done
+              </button>
+            </div>
+          </main>
+        </div>
+      )
+    }
 
     return (
       <div className={`min-h-screen ${isOut ? 'bg-amber-600' : 'bg-blue-600'} flex flex-col`}>
@@ -393,23 +546,40 @@ export default function CheckInKioskPage({ params }: Props) {
                 <p className="text-xl mb-6">Where are you going?</p>
 
                 <div className="grid grid-cols-2 gap-4 mb-4">
-                  {destinations.map(dest => (
-                    <button
-                      key={dest.id}
-                      onClick={() => handleCheckOut(dest.name)}
-                      disabled={isProcessing}
-                      className="py-8 text-2xl font-bold rounded-2xl bg-amber-500 hover:bg-amber-400 text-white disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {isProcessing ? (
-                        <svg className="animate-spin h-6 w-6 mx-auto" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                        </svg>
-                      ) : (
-                        dest.name
-                      )}
-                    </button>
-                  ))}
+                  {destinations.map(dest => {
+                    // At capacity if currently out + approved reservations >= capacity
+                    const atCapacity = dest.capacity && (dest.currentCount + dest.approvedCount) >= dest.capacity
+                    return (
+                      <button
+                        key={dest.id}
+                        onClick={() => handleCheckOut(dest.name)}
+                        disabled={isProcessing}
+                        className={`py-6 text-xl font-bold rounded-2xl text-white disabled:opacity-50 disabled:cursor-not-allowed ${
+                          atCapacity
+                            ? 'bg-yellow-600 hover:bg-yellow-500'
+                            : 'bg-amber-500 hover:bg-amber-400'
+                        }`}
+                      >
+                        {isProcessing ? (
+                          <svg className="animate-spin h-6 w-6 mx-auto" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                          </svg>
+                        ) : (
+                          <div>
+                            <div>{dest.name}</div>
+                            {atCapacity && (
+                              <div className="text-sm font-normal mt-1 opacity-90">
+                                {dest.waitlistCount > 0
+                                  ? `${dest.waitlistCount} waiting`
+                                  : 'Will join waitlist'}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </button>
+                    )
+                  })}
                 </div>
               </>
             )}

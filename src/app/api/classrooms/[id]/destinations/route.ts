@@ -76,11 +76,18 @@ export async function POST(request: Request, { params }: RouteParams) {
     }
 
     const body = await request.json()
-    const { name } = body
+    const { name, capacity } = body
 
     if (!name || typeof name !== 'string' || name.trim().length === 0) {
       return NextResponse.json({ error: 'Destination name is required' }, { status: 400 })
     }
+
+    // Validate capacity if provided
+    const parsedCapacity = capacity === null || capacity === undefined || capacity === '' || capacity === 0
+      ? null
+      : typeof capacity === 'number' && capacity > 0
+        ? capacity
+        : null
 
     // Get the highest sortOrder
     const maxSortOrder = await prisma.destination.aggregate({
@@ -95,7 +102,8 @@ export async function POST(request: Request, { params }: RouteParams) {
       data: {
         name: name.trim(),
         classroomId,
-        sortOrder: nextSortOrder
+        sortOrder: nextSortOrder,
+        capacity: parsedCapacity
       }
     })
 

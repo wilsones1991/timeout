@@ -73,15 +73,50 @@ export async function GET(request: Request, { params }: RouteParams) {
       durationMinutes: Math.floor((now.getTime() - checkIn.checkOutAt.getTime()) / 60000)
     }))
 
+    // Get capacity info for each destination
+    const destinationsWithCounts = await Promise.all(
+      destinations.map(async (d) => {
+        const currentCount = await prisma.checkIn.count({
+          where: {
+            classroomId,
+            destination: d.name,
+            checkInAt: null
+          }
+        })
+
+        const approvedCount = await prisma.waitListEntry.count({
+          where: {
+            classroomId,
+            destinationId: d.id,
+            status: 'approved'
+          }
+        })
+
+        const waitlistCount = await prisma.waitListEntry.count({
+          where: {
+            classroomId,
+            destinationId: d.id,
+            status: { in: ['waiting', 'approved'] }
+          }
+        })
+
+        return {
+          id: d.id,
+          name: d.name,
+          capacity: d.capacity,
+          currentCount,
+          approvedCount,
+          waitlistCount
+        }
+      })
+    )
+
     return NextResponse.json({
       classroom: {
         id: classroom.id,
         name: classroom.name
       },
-      destinations: destinations.map(d => ({
-        id: d.id,
-        name: d.name
-      })),
+      destinations: destinationsWithCounts,
       queue
     })
   } catch (error) {

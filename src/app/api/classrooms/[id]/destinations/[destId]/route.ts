@@ -33,10 +33,10 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     }
 
     const body = await request.json()
-    const { name, sortOrder, isActive } = body
+    const { name, sortOrder, isActive, capacity } = body
 
     // Build update data
-    const updateData: { name?: string; sortOrder?: number; isActive?: boolean } = {}
+    const updateData: { name?: string; sortOrder?: number; isActive?: boolean; capacity?: number | null } = {}
 
     if (name !== undefined) {
       if (typeof name !== 'string' || name.trim().length === 0) {
@@ -57,6 +57,15 @@ export async function PATCH(request: Request, { params }: RouteParams) {
         return NextResponse.json({ error: 'isActive must be a boolean' }, { status: 400 })
       }
       updateData.isActive = isActive
+    }
+
+    if (capacity !== undefined) {
+      // Accept null, 0, or empty string as "unlimited"
+      if (capacity === null || capacity === 0 || capacity === '') {
+        updateData.capacity = null
+      } else if (typeof capacity === 'number' && capacity > 0) {
+        updateData.capacity = capacity
+      }
     }
 
     const destination = await prisma.destination.update({

@@ -4,6 +4,8 @@ import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import StudentList from '@/components/StudentList'
 import DestinationManager from '@/components/DestinationManager'
+import WaitListManager from '@/components/WaitListManager'
+import WaitListWidgetButton from '@/components/WaitListWidgetButton'
 
 type Props = {
   params: Promise<{ id: string }>
@@ -57,6 +59,7 @@ export default async function ClassroomPage({ params }: Props) {
               </div>
             </div>
             <div className="flex items-center gap-3">
+              <WaitListWidgetButton classroomId={id} />
               <Link
                 href={`/dashboard/classroom/${id}/history`}
                 className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md flex items-center gap-2"
@@ -83,6 +86,7 @@ export default async function ClassroomPage({ params }: Props) {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         <StudentList classroomId={id} classroomName={classroom.name} />
         <DestinationManager classroomId={id} />
+        <WaitListManager classroomId={id} />
       </main>
     </div>
   )

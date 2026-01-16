@@ -7,6 +7,7 @@ type Destination = {
   name: string
   sortOrder: number
   isActive: boolean
+  capacity: number | null
 }
 
 type Props = {
@@ -16,9 +17,12 @@ type Props = {
 export default function DestinationManager({ classroomId }: Props) {
   const [destinations, setDestinations] = useState<Destination[]>([])
   const [newName, setNewName] = useState('')
+  const [newCapacity, setNewCapacity] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [isAdding, setIsAdding] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editCapacity, setEditCapacity] = useState('')
 
   useEffect(() => {
     async function loadDestinations() {
@@ -45,10 +49,14 @@ export default function DestinationManager({ classroomId }: Props) {
     setError(null)
 
     try {
+      const capacity = newCapacity ? parseInt(newCapacity, 10) : null
       const response = await fetch(`/api/classrooms/${classroomId}/destinations`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: newName.trim() })
+        body: JSON.stringify({
+          name: newName.trim(),
+          capacity: capacity && capacity > 0 ? capacity : null
+        })
       })
 
       if (!response.ok) {
@@ -59,6 +67,7 @@ export default function DestinationManager({ classroomId }: Props) {
       const data = await response.json()
       setDestinations([...destinations, data.destination])
       setNewName('')
+      setNewCapacity('')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to add destination')
     } finally {
@@ -85,6 +94,45 @@ export default function DestinationManager({ classroomId }: Props) {
     }
   }
 
+  function startEdit(dest: Destination) {
+    setEditingId(dest.id)
+    setEditCapacity(dest.capacity?.toString() || '')
+  }
+
+  function cancelEdit() {
+    setEditingId(null)
+    setEditCapacity('')
+  }
+
+  async function saveCapacity(destId: string) {
+    setError(null)
+
+    try {
+      const capacity = editCapacity ? parseInt(editCapacity, 10) : null
+      const response = await fetch(`/api/classrooms/${classroomId}/destinations/${destId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          capacity: capacity && capacity > 0 ? capacity : null
+        })
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'Failed to update destination')
+      }
+
+      const data = await response.json()
+      setDestinations(destinations.map(d =>
+        d.id === destId ? data.destination : d
+      ))
+      setEditingId(null)
+      setEditCapacity('')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update destination')
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="bg-white rounded-lg shadow p-6">
@@ -104,6 +152,7 @@ export default function DestinationManager({ classroomId }: Props) {
       </h3>
       <p className="text-sm text-gray-600 mb-4">
         Students will select one of these destinations when checking out.
+        Set a capacity limit to enable wait lists.
       </p>
 
       {error && (
@@ -119,7 +168,55 @@ export default function DestinationManager({ classroomId }: Props) {
             key={dest.id}
             className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
           >
-            <span className="font-medium text-gray-900">{dest.name}</span>
+            <div className="flex-1">
+              <span className="font-medium text-gray-900">{dest.name}</span>
+              {editingId === dest.id ? (
+                <div className="mt-2 flex items-center gap-2">
+                  <label className="text-sm text-gray-600">Limit:</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={editCapacity}
+                    onChange={(e) => setEditCapacity(e.target.value)}
+                    placeholder="Unlimited"
+                    className="w-24 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                  <button
+                    onClick={() => saveCapacity(dest.id)}
+                    className="px-2 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+                  >
+                    Save
+                  </button>
+                  <button
+                    onClick={cancelEdit}
+                    className="px-2 py-1 text-sm text-gray-600 hover:text-gray-900"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <div className="mt-1 text-sm text-gray-500">
+                  {dest.capacity ? (
+                    <span className="inline-flex items-center gap-1">
+                      <span className="text-amber-600 font-medium">Limit: {dest.capacity}</span>
+                      <button
+                        onClick={() => startEdit(dest)}
+                        className="text-blue-600 hover:text-blue-800"
+                      >
+                        (edit)
+                      </button>
+                    </span>
+                  ) : (
+                    <button
+                      onClick={() => startEdit(dest)}
+                      className="text-gray-400 hover:text-gray-600"
+                    >
+                      + Set limit
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
             <button
               onClick={() => handleDelete(dest.id)}
               className="p-1 text-gray-400 hover:text-red-500"
@@ -139,21 +236,34 @@ export default function DestinationManager({ classroomId }: Props) {
       </ul>
 
       {/* Add form */}
-      <form onSubmit={handleAdd} className="flex gap-2">
-        <input
-          type="text"
-          value={newName}
-          onChange={(e) => setNewName(e.target.value)}
-          placeholder="New destination name"
-          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-        />
-        <button
-          type="submit"
-          disabled={!newName.trim() || isAdding}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isAdding ? 'Adding...' : 'Add'}
-        </button>
+      <form onSubmit={handleAdd} className="space-y-3">
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            placeholder="New destination name"
+            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          />
+          <input
+            type="number"
+            min="0"
+            value={newCapacity}
+            onChange={(e) => setNewCapacity(e.target.value)}
+            placeholder="Limit"
+            className="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          />
+          <button
+            type="submit"
+            disabled={!newName.trim() || isAdding}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isAdding ? 'Adding...' : 'Add'}
+          </button>
+        </div>
+        <p className="text-xs text-gray-500">
+          Leave limit empty for unlimited. Set to 1 for single-student destinations like bathroom.
+        </p>
       </form>
     </div>
   )

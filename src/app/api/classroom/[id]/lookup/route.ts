@@ -66,6 +66,16 @@ export async function GET(request: Request, { params }: RouteParams) {
       }
     })
 
+    // Check if student is on waitlist
+    const waitlistEntry = await prisma.waitListEntry.findFirst({
+      where: {
+        studentId: student.id,
+        classroomId,
+        status: { in: ['waiting', 'approved'] }
+      },
+      include: { destination: true }
+    })
+
     return NextResponse.json({
       student: {
         id: student.id,
@@ -73,7 +83,13 @@ export async function GET(request: Request, { params }: RouteParams) {
         lastName: decrypt(student.lastName),
         cardId: student.cardId,
         status: activeCheckOut ? 'out' : 'in',
-        checkOutTime: activeCheckOut?.checkOutAt.toISOString()
+        checkOutTime: activeCheckOut?.checkOutAt.toISOString(),
+        waitlistStatus: waitlistEntry ? {
+          status: waitlistEntry.status,
+          destination: waitlistEntry.destination.name,
+          position: waitlistEntry.position,
+          approvedAt: waitlistEntry.approvedAt?.toISOString() || null
+        } : null
       }
     })
   } catch (error) {
