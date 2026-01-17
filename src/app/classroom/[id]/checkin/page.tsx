@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, use } from 'react'
+import { Suspense, useState, useEffect, useCallback, use } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import QRScanner from '@/components/QRScanner'
 import PinEntryModal from '@/components/PinEntryModal'
@@ -50,7 +50,7 @@ type Props = {
   params: Promise<{ id: string }>
 }
 
-export default function CheckInKioskPage({ params }: Props) {
+function CheckInKioskContent({ params }: Props) {
   const { id: classroomId } = use(params)
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -797,5 +797,23 @@ export default function CheckInKioskPage({ params }: Props) {
         description={pinAction === 'lock' ? 'Enter your PIN to lock the kiosk' : pinAction === 'unlock' ? 'Enter your PIN to unlock the kiosk' : 'Enter your PIN to return to dashboard'}
       />
     </div>
+  )
+}
+
+export default function CheckInKioskPage({ params }: Props) {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="text-center text-white">
+          <svg className="animate-spin h-12 w-12 mx-auto mb-4" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
+          <p className="text-xl">Loading...</p>
+        </div>
+      </div>
+    }>
+      <CheckInKioskContent params={params} />
+    </Suspense>
   )
 }
