@@ -1,13 +1,11 @@
 node_modules
 .next
+.pnpm-store
+.git
 dist
 out
 coverage
-.git
 Dockerfile*
 docker-compose*
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
+*.log
 .env*
