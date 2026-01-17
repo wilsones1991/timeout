@@ -11,7 +11,16 @@ export async function POST(request: Request) {
   }
 
   try {
+    const contentType = request.headers.get('content-type')
+    console.log('[kiosk-mode] Content-Type:', contentType)
+
+    const clonedRequest = request.clone()
+    const rawBody = await clonedRequest.text()
+    console.log('[kiosk-mode] Raw body:', rawBody)
+
     const body = await request.json()
+    console.log('[kiosk-mode] Parsed body:', body)
+
     const { action } = body
 
     if (action === 'enable') {
@@ -23,8 +32,12 @@ export async function POST(request: Request) {
     } else {
       return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
     }
-  } catch {
-    return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
+  } catch (err) {
+    console.error('[kiosk-mode] Error:', err)
+    return NextResponse.json({
+      error: 'Invalid request',
+      details: err instanceof Error ? err.message : 'Unknown error'
+    }, { status: 400 })
   }
 }
 
