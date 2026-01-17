@@ -1,12 +1,14 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { Html5Qrcode } from 'html5-qrcode'
 
 type Props = {
   onScan: (cardId: string) => void
   isEnabled: boolean
 }
+
+type FacingMode = 'user' | 'environment'
 
 // Helper to safely stop and clear scanner
 async function stopScanner(scanner: Html5Qrcode | null): Promise<void> {
@@ -30,15 +32,36 @@ export default function QRScanner({ onScan, isEnabled }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [manualEntry, setManualEntry] = useState('')
   const [showManualEntry, setShowManualEntry] = useState(false)
+  const [facingMode, setFacingMode] = useState<FacingMode>('user') // Default to front camera
+  const [hasMultipleCameras, setHasMultipleCameras] = useState(false)
   const scannerRef = useRef<Html5Qrcode | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const onScanRef = useRef(onScan)
   const isStartingRef = useRef(false)
+  const facingModeRef = useRef(facingMode)
 
-  // Keep onScan ref updated
+  // Keep refs updated
   useEffect(() => {
     onScanRef.current = onScan
   }, [onScan])
+
+  useEffect(() => {
+    facingModeRef.current = facingMode
+  }, [facingMode])
+
+  // Detect available cameras on mount
+  useEffect(() => {
+    async function detectCameras() {
+      try {
+        const devices = await Html5Qrcode.getCameras()
+        setHasMultipleCameras(devices.length > 1)
+      } catch (err) {
+        console.debug('Could not detect cameras:', err)
+        setHasMultipleCameras(false)
+      }
+    }
+    detectCameras()
+  }, [])
 
   useEffect(() => {
     // Don't start if disabled or no container
@@ -71,7 +94,7 @@ export default function QRScanner({ onScan, isEnabled }: Props) {
 
       try {
         await scanner.start(
-          { facingMode: 'environment' },
+          { facingMode: facingModeRef.current },
           {
             fps: 10,
             qrbox: { width: 250, height: 250 }
@@ -133,7 +156,11 @@ export default function QRScanner({ onScan, isEnabled }: Props) {
         stopScanner(scanner)
       }
     }
-  }, [isEnabled])
+  }, [isEnabled, facingMode])
+
+  const switchCamera = useCallback(() => {
+    setFacingMode(prev => prev === 'user' ? 'environment' : 'user')
+  }, [])
 
   function handleManualSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -186,6 +213,20 @@ export default function QRScanner({ onScan, isEnabled }: Props) {
             </div>
           </div>
         )}
+
+        {/* Camera Switch Button */}
+        {isScanning && hasMultipleCameras && (
+          <button
+            onClick={switchCamera}
+            className="absolute top-3 right-3 p-2 bg-black/50 hover:bg-black/70 rounded-full text-white transition-colors"
+            aria-label={`Switch to ${facingMode === 'user' ? 'rear' : 'front'} camera`}
+            title={`Switch to ${facingMode === 'user' ? 'rear' : 'front'} camera`}
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+          </button>
+        )}
       </div>
 
       {/* Error Message */}
@@ -197,9 +238,16 @@ export default function QRScanner({ onScan, isEnabled }: Props) {
 
       {/* Instructions */}
       {isScanning && (
-        <p className="mt-4 text-lg text-gray-600 text-center">
-          Hold your QR code card up to the camera
-        </p>
+        <div className="mt-4 text-center">
+          <p className="text-lg text-gray-600">
+            Hold your QR code card up to the camera
+          </p>
+          {hasMultipleCameras && (
+            <p className="text-sm text-gray-500 mt-1">
+              Using {facingMode === 'user' ? 'front' : 'rear'} camera
+            </p>
+          )}
+        </div>
       )}
 
       {/* Manual Entry Toggle */}
