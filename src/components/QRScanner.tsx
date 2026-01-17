@@ -6,9 +6,54 @@ import { Html5Qrcode } from 'html5-qrcode'
 type Props = {
   onScan: (cardId: string) => void
   isEnabled: boolean
+  hideControls?: boolean
+  onCamerasDetected?: (cameras: CameraDevice[], selectionMode: SelectionMode) => void
+  selectedCamera?: { facingMode?: FacingMode; deviceId?: string }
+  scannerId?: string
 }
 
-type FacingMode = 'user' | 'environment'
+export type FacingMode = 'user' | 'environment'
+export type CameraDevice = { id: string; label: string }
+export type SelectionMode = 'flip' | 'dropdown' | 'none'
+
+const STORAGE_KEY = 'qr-scanner-camera-preference'
+
+type StoredPreference = {
+  facingMode?: FacingMode
+  deviceId?: string
+}
+
+function loadStoredPreference(): StoredPreference | null {
+  if (typeof window === 'undefined') return null
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY)
+    if (stored) {
+      return JSON.parse(stored) as StoredPreference
+    }
+  } catch (err) {
+    console.debug('Failed to load camera preference:', err)
+  }
+  return null
+}
+
+function savePreference(pref: StoredPreference): void {
+  if (typeof window === 'undefined') return
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(pref))
+  } catch (err) {
+    console.debug('Failed to save camera preference:', err)
+  }
+}
+
+function isMobileDevice(cameras: CameraDevice[]): boolean {
+  // Only use flip mode if cameras explicitly have front/back labels
+  // This avoids false positives on laptops with multiple webcams or touchscreens
+  if (cameras.length !== 2) return false
+  const labels = cameras.map(c => c.label.toLowerCase())
+  return labels.some(l =>
+    l.includes('front') || l.includes('back') || l.includes('facing')
+  )
+}
 
 // Helper to safely stop and clear scanner
 async function stopScanner(scanner: Html5Qrcode | null): Promise<void> {
@@ -27,43 +72,83 @@ async function stopScanner(scanner: Html5Qrcode | null): Promise<void> {
   }
 }
 
-export default function QRScanner({ onScan, isEnabled }: Props) {
+export default function QRScanner({ onScan, isEnabled, hideControls, onCamerasDetected, selectedCamera, scannerId = 'qr-reader' }: Props) {
   const [isScanning, setIsScanning] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [manualEntry, setManualEntry] = useState('')
   const [showManualEntry, setShowManualEntry] = useState(false)
   const [facingMode, setFacingMode] = useState<FacingMode>('user') // Default to front camera
-  const [hasMultipleCameras, setHasMultipleCameras] = useState(false)
+  const [cameras, setCameras] = useState<CameraDevice[]>([])
+  const [selectionMode, setSelectionMode] = useState<SelectionMode>('none')
+  const [selectedCameraId, setSelectedCameraId] = useState<string | null>(null)
+  const [camerasDetected, setCamerasDetected] = useState(false)
   const scannerRef = useRef<Html5Qrcode | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const onScanRef = useRef(onScan)
   const isStartingRef = useRef(false)
-  const facingModeRef = useRef(facingMode)
+  const isCleaningUpRef = useRef(false)
 
-  // Keep refs updated
+  // Use external camera selection if provided
+  const effectiveFacingMode = selectedCamera?.facingMode ?? facingMode
+  const effectiveDeviceId = selectedCamera?.deviceId ?? selectedCameraId
+
+  // Keep onScan ref updated to avoid stale closures in scanner callback
   useEffect(() => {
     onScanRef.current = onScan
   }, [onScan])
 
-  useEffect(() => {
-    facingModeRef.current = facingMode
-  }, [facingMode])
-
-  // Detect available cameras on mount
+  // Detect available cameras on mount and determine selection mode
   useEffect(() => {
     async function detectCameras() {
       try {
         const devices = await Html5Qrcode.getCameras()
-        setHasMultipleCameras(devices.length > 1)
+        const cameraList: CameraDevice[] = devices.map(d => ({
+          id: d.id,
+          label: d.label || `Camera ${d.id.slice(0, 8)}`
+        }))
+        setCameras(cameraList)
+
+        // Determine selection mode
+        let mode: SelectionMode = 'none'
+        if (cameraList.length <= 1) {
+          mode = 'none'
+        } else if (isMobileDevice(cameraList)) {
+          mode = 'flip'
+          // Load stored facingMode preference for mobile
+          const stored = loadStoredPreference()
+          if (stored?.facingMode) {
+            setFacingMode(stored.facingMode)
+          }
+        } else {
+          mode = 'dropdown'
+          // Load stored deviceId preference for desktop
+          const stored = loadStoredPreference()
+          if (stored?.deviceId && cameraList.some(c => c.id === stored.deviceId)) {
+            setSelectedCameraId(stored.deviceId)
+          } else {
+            // Default to first camera
+            setSelectedCameraId(cameraList[0].id)
+          }
+        }
+        setSelectionMode(mode)
+        setCamerasDetected(true)
+
+        // Notify parent of detected cameras
+        onCamerasDetected?.(cameraList, mode)
       } catch (err) {
         console.debug('Could not detect cameras:', err)
-        setHasMultipleCameras(false)
+        setSelectionMode('none')
+        setCamerasDetected(true)
+        onCamerasDetected?.([], 'none')
       }
     }
     detectCameras()
-  }, [])
+  }, [onCamerasDetected])
 
   useEffect(() => {
+    // Don't start until camera detection is complete
+    if (!camerasDetected) return
+
     // Don't start if disabled or no container
     if (!isEnabled || !containerRef.current) {
       // Clean up if we were scanning
@@ -71,30 +156,41 @@ export default function QRScanner({ onScan, isEnabled }: Props) {
         const scanner = scannerRef.current
         scannerRef.current = null
         setIsScanning(false)
-        stopScanner(scanner)
+        isCleaningUpRef.current = true
+        stopScanner(scanner).finally(() => {
+          isCleaningUpRef.current = false
+        })
       }
       return
     }
 
-    // Don't start if already running or starting
+    // Don't start if already running or starting (cleanup is handled by waiting inside startScanner)
     if (scannerRef.current || isStartingRef.current) return
 
     let cancelled = false
     isStartingRef.current = true
 
     async function startScanner() {
-      // Small delay to handle React Strict Mode double-mount
-      await new Promise(resolve => setTimeout(resolve, 100))
-      if (cancelled) {
-        isStartingRef.current = false
-        return
+      // Wait for any ongoing cleanup to complete (e.g., during camera switch)
+      while (isCleaningUpRef.current) {
+        await new Promise(resolve => setTimeout(resolve, 50))
+        if (cancelled) {
+          isStartingRef.current = false
+          return
+        }
       }
 
-      const scanner = new Html5Qrcode('qr-reader')
+      const scanner = new Html5Qrcode(scannerId)
 
       try {
+        // Determine camera constraint based on selection mode
+        // Use effective values that prefer external selection if provided
+        const cameraIdOrConfig = selectionMode === 'dropdown' && effectiveDeviceId
+          ? effectiveDeviceId
+          : { facingMode: effectiveFacingMode }
+
         await scanner.start(
-          { facingMode: facingModeRef.current },
+          cameraIdOrConfig,
           {
             fps: 10,
             qrbox: { width: 250, height: 250 }
@@ -153,13 +249,25 @@ export default function QRScanner({ onScan, isEnabled }: Props) {
         const scanner = scannerRef.current
         scannerRef.current = null
         setIsScanning(false)
-        stopScanner(scanner)
+        isCleaningUpRef.current = true
+        stopScanner(scanner).finally(() => {
+          isCleaningUpRef.current = false
+        })
       }
     }
-  }, [isEnabled, facingMode])
+  }, [isEnabled, effectiveFacingMode, effectiveDeviceId, selectionMode, camerasDetected, scannerId])
 
   const switchCamera = useCallback(() => {
-    setFacingMode(prev => prev === 'user' ? 'environment' : 'user')
+    setFacingMode(prev => {
+      const newMode = prev === 'user' ? 'environment' : 'user'
+      savePreference({ facingMode: newMode })
+      return newMode
+    })
+  }, [])
+
+  const handleCameraSelect = useCallback((deviceId: string) => {
+    setSelectedCameraId(deviceId)
+    savePreference({ deviceId })
   }, [])
 
   function handleManualSubmit(e: React.FormEvent) {
@@ -175,7 +283,11 @@ export default function QRScanner({ onScan, isEnabled }: Props) {
     <div className="flex flex-col items-center">
       {/* Scanner Container */}
       <div className="relative w-full max-w-md aspect-square bg-black rounded-2xl overflow-hidden">
-        <div id="qr-reader" ref={containerRef} className="w-full h-full" />
+        <div
+          id={scannerId}
+          ref={containerRef}
+          className="w-full h-full [&_video]:w-full! [&_video]:h-full! [&_video]:object-cover! [&>div]:w-full! [&>div]:h-full! [&>div]:border-none!"
+        />
 
         {!isScanning && !error && isEnabled && (
           <div className="absolute inset-0 flex items-center justify-center">
@@ -203,8 +315,12 @@ export default function QRScanner({ onScan, isEnabled }: Props) {
         {/* Scanning Frame Overlay */}
         {isScanning && (
           <div className="absolute inset-0 pointer-events-none">
+            {/* Shadow/vignette effect outside scanning area */}
+            <div className="absolute inset-0" style={{ boxShadow: 'inset 0 0 0 9999px rgba(0, 0, 0, 0.5)' }}>
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-lg" style={{ boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)' }} />
+            </div>
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-64 h-64 border-4 border-white rounded-lg relative">
+              <div className="w-64 h-64 border-4 border-white/80 rounded-lg relative">
                 <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-blue-400 rounded-tl-lg" />
                 <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-blue-400 rounded-tr-lg" />
                 <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-blue-400 rounded-bl-lg" />
@@ -214,18 +330,37 @@ export default function QRScanner({ onScan, isEnabled }: Props) {
           </div>
         )}
 
-        {/* Camera Switch Button */}
-        {isScanning && hasMultipleCameras && (
+        {/* Camera Switch Button (Mobile - flip mode) */}
+        {!hideControls && isScanning && selectionMode === 'flip' && (
           <button
             onClick={switchCamera}
             className="absolute top-3 right-3 p-2 bg-black/50 hover:bg-black/70 rounded-full text-white transition-colors"
-            aria-label={`Switch to ${facingMode === 'user' ? 'rear' : 'front'} camera`}
-            title={`Switch to ${facingMode === 'user' ? 'rear' : 'front'} camera`}
+            aria-label={`Switch to ${effectiveFacingMode === 'user' ? 'rear' : 'front'} camera`}
+            title={`Switch to ${effectiveFacingMode === 'user' ? 'rear' : 'front'} camera`}
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
           </button>
+        )}
+
+        {/* Camera Dropdown (Desktop - dropdown mode) */}
+        {!hideControls && isScanning && selectionMode === 'dropdown' && cameras.length > 1 && (
+          <div className="absolute top-3 right-3">
+            <select
+              value={effectiveDeviceId || ''}
+              onChange={(e) => handleCameraSelect(e.target.value)}
+              className="px-3 py-2 bg-black/50 hover:bg-black/70 text-white text-sm rounded-lg border-none outline-none cursor-pointer appearance-none pr-8"
+              style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 8px center', backgroundSize: '16px' }}
+              aria-label="Select camera"
+            >
+              {cameras.map(cam => (
+                <option key={cam.id} value={cam.id} className="bg-gray-800">
+                  {cam.label}
+                </option>
+              ))}
+            </select>
+          </div>
         )}
       </div>
 
@@ -242,9 +377,14 @@ export default function QRScanner({ onScan, isEnabled }: Props) {
           <p className="text-lg text-gray-600">
             Hold your QR code card up to the camera
           </p>
-          {hasMultipleCameras && (
+          {selectionMode === 'flip' && (
             <p className="text-sm text-gray-500 mt-1">
-              Using {facingMode === 'user' ? 'front' : 'rear'} camera
+              Using {effectiveFacingMode === 'user' ? 'front' : 'rear'} camera
+            </p>
+          )}
+          {selectionMode === 'dropdown' && effectiveDeviceId && (
+            <p className="text-sm text-gray-500 mt-1">
+              {cameras.find(c => c.id === effectiveDeviceId)?.label || 'Camera'}
             </p>
           )}
         </div>

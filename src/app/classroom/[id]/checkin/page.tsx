@@ -2,7 +2,7 @@
 
 import { Suspense, useState, useEffect, useCallback, use } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import QRScanner from '@/components/QRScanner'
+import QRScanner, { type CameraDevice, type SelectionMode, type FacingMode } from '@/components/QRScanner'
 import PinEntryModal from '@/components/PinEntryModal'
 import { useWaitlist } from '@/hooks/useWaitlist'
 
@@ -69,10 +69,86 @@ function CheckInKioskContent({ params }: Props) {
   const [confirmation, setConfirmation] = useState<string | null>(null)
   const [waitlistConfirmation, setWaitlistConfirmation] = useState<{ message: string; position: number } | null>(null)
   const [scannerEnabled, setScannerEnabled] = useState(true)
+  const [cameraActive, setCameraActive] = useState(false) // Camera off by default
   const [isLocked, setIsLocked] = useState(false)
   const [showPinModal, setShowPinModal] = useState(false)
-  const [pinAction, setPinAction] = useState<'lock' | 'unlock' | 'back' | null>(null)
+  const [pinAction, setPinAction] = useState<'lock' | 'unlock' | 'back' | 'settings' | null>(null)
   const [hasPin, setHasPin] = useState(false)
+  const [showCameraSettings, setShowCameraSettings] = useState(false)
+  const [cameras, setCameras] = useState<CameraDevice[]>([])
+  const [cameraSelectionMode, setCameraSelectionMode] = useState<SelectionMode>('none')
+  const [selectedCamera, setSelectedCamera] = useState<{ facingMode?: FacingMode; deviceId?: string }>({})
+
+  // Auto-deactivate camera after inactivity timeout
+  const CAMERA_TIMEOUT = 60000 // 60 seconds
+  useEffect(() => {
+    if (!cameraActive || !scannerEnabled) return
+
+    const timer = setTimeout(() => {
+      setCameraActive(false)
+    }, CAMERA_TIMEOUT)
+
+    return () => clearTimeout(timer)
+  }, [cameraActive, scannerEnabled])
+
+  // Detect available cameras on mount (without activating them)
+  useEffect(() => {
+    async function detectCameras() {
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices()
+        const videoDevices = devices.filter(d => d.kind === 'videoinput')
+
+        // Determine selection mode based on device capabilities
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+        const hasMultipleCameras = videoDevices.length > 1
+
+        if (hasMultipleCameras) {
+          const detectedCameras: CameraDevice[] = videoDevices.map(d => ({
+            id: d.deviceId,
+            label: d.label || `Camera ${videoDevices.indexOf(d) + 1}`
+          }))
+          const selectionMode: SelectionMode = isMobile ? 'flip' : 'dropdown'
+          setCameras(detectedCameras)
+          setCameraSelectionMode(selectionMode)
+        }
+      } catch {
+        // Camera enumeration may fail without permissions - that's ok
+      }
+    }
+    detectCameras()
+  }, [])
+
+  function handleDeactivateCamera() {
+    setCameraActive(false)
+  }
+
+  // Handle camera detection from QRScanner
+  const handleCamerasDetected = useCallback((detectedCameras: CameraDevice[], selectionMode: SelectionMode) => {
+    setCameras(detectedCameras)
+    setCameraSelectionMode(selectionMode)
+
+    // Load stored preference
+    const STORAGE_KEY = 'qr-scanner-camera-preference'
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY)
+      if (stored) {
+        const pref = JSON.parse(stored)
+        if (selectionMode === 'flip' && pref.facingMode) {
+          setSelectedCamera({ facingMode: pref.facingMode })
+        } else if (selectionMode === 'dropdown' && pref.deviceId && detectedCameras.some(c => c.id === pref.deviceId)) {
+          setSelectedCamera({ deviceId: pref.deviceId })
+        } else if (selectionMode === 'dropdown' && detectedCameras.length > 0) {
+          setSelectedCamera({ deviceId: detectedCameras[0].id })
+        }
+      } else if (selectionMode === 'dropdown' && detectedCameras.length > 0) {
+        setSelectedCamera({ deviceId: detectedCameras[0].id })
+      }
+    } catch {
+      if (selectionMode === 'dropdown' && detectedCameras.length > 0) {
+        setSelectedCamera({ deviceId: detectedCameras[0].id })
+      }
+    }
+  }, [])
 
   // Restore locked state from localStorage on mount
   useEffect(() => {
@@ -81,6 +157,7 @@ function CheckInKioskContent({ params }: Props) {
     if (savedLocked === 'true') {
       setIsLocked(true)
       setScannerEnabled(false)
+      setCameraActive(false)
     }
   }, [classroomId])
 
@@ -299,6 +376,7 @@ function CheckInKioskContent({ params }: Props) {
     if (!hasPin) {
       setIsLocked(true)
       setScannerEnabled(false)
+      setCameraActive(false)
       localStorage.setItem(storageKey, 'true')
       return
     }
@@ -331,6 +409,7 @@ function CheckInKioskContent({ params }: Props) {
     if (pinAction === 'lock') {
       setIsLocked(true)
       setScannerEnabled(false)
+      setCameraActive(false)
       localStorage.setItem(storageKey, 'true')
     } else if (pinAction === 'unlock') {
       setIsLocked(false)
@@ -338,6 +417,9 @@ function CheckInKioskContent({ params }: Props) {
       localStorage.removeItem(storageKey)
     } else if (pinAction === 'back') {
       router.push(`/dashboard/classroom/${classroomId}`)
+    } else if (pinAction === 'settings') {
+      setShowCameraSettings(true)
+      setCameraActive(true) // Activate camera so teacher can see preview
     }
     setPinAction(null)
   }
@@ -345,6 +427,40 @@ function CheckInKioskContent({ params }: Props) {
   function handlePinCancel() {
     setShowPinModal(false)
     setPinAction(null)
+  }
+
+  function handleSettingsAttempt() {
+    if (!hasPin) {
+      setShowCameraSettings(true)
+      setCameraActive(true) // Activate camera so teacher can see preview
+      return
+    }
+    setPinAction('settings')
+    setShowPinModal(true)
+  }
+
+  function saveCameraPreference(pref: { facingMode?: FacingMode; deviceId?: string }) {
+    const STORAGE_KEY = 'qr-scanner-camera-preference'
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(pref))
+    } catch {
+      // Ignore errors
+    }
+  }
+
+  function handleCameraSettingChange(value: string) {
+    if (cameraSelectionMode === 'flip') {
+      const newMode = value as FacingMode
+      setSelectedCamera({ facingMode: newMode })
+      saveCameraPreference({ facingMode: newMode })
+    } else {
+      setSelectedCamera({ deviceId: value })
+      saveCameraPreference({ deviceId: value })
+    }
+  }
+
+  function handleActivateCamera() {
+    setCameraActive(true)
   }
 
   if (isLoading) {
@@ -640,22 +756,70 @@ function CheckInKioskContent({ params }: Props) {
           <h1 className="text-2xl font-bold text-white">{classroom?.name}</h1>
           <p className="text-gray-400 text-sm">Scan your QR code to check in or out</p>
         </div>
-        <button
-          onClick={handleLockAttempt}
-          className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg"
-          title="Lock Kiosk"
-        >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-          </svg>
-        </button>
+        <div className="flex items-center gap-1">
+          {/* Camera Settings Button - only show if multiple cameras */}
+          {cameras.length > 1 && (
+            <button
+              onClick={handleSettingsAttempt}
+              className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg"
+              title="Camera Settings"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </button>
+          )}
+          <button
+            onClick={handleLockAttempt}
+            className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg"
+            title="Lock Kiosk"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+          </button>
+        </div>
       </header>
 
       <main className="flex-1 flex flex-col lg:flex-row">
         {/* Scanner Section */}
         <div className="flex-1 flex items-center justify-center p-6">
           <div className="w-full max-w-lg">
-            <QRScanner onScan={handleScan} isEnabled={scannerEnabled} />
+            {cameraActive && !showCameraSettings ? (
+              <div className="flex flex-col items-center">
+                <QRScanner
+                  onScan={handleScan}
+                  isEnabled={scannerEnabled}
+                  hideControls={true}
+                  onCamerasDetected={handleCamerasDetected}
+                  selectedCamera={selectedCamera}
+                />
+                <button
+                  onClick={handleDeactivateCamera}
+                  className="mt-4 px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-xl font-medium"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : !showCameraSettings ? (
+              /* Tap to Scan Button */
+              <div className="relative w-full max-w-md mx-auto aspect-square bg-gray-800 rounded-2xl overflow-hidden flex items-center justify-center">
+                <button
+                  onClick={handleActivateCamera}
+                  className="flex flex-col items-center justify-center text-white hover:scale-105 transition-transform"
+                >
+                  <div className="w-32 h-32 rounded-full bg-blue-600 hover:bg-blue-500 flex items-center justify-center mb-6">
+                    <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                  </div>
+                  <p className="text-2xl font-bold">Tap to Scan</p>
+                  <p className="text-gray-400 mt-2">Press to activate camera</p>
+                </button>
+              </div>
+            ) : null}
 
             {error && (
               <div className="mt-4 p-4 bg-red-500/20 border border-red-500 rounded-lg text-red-200 text-center">
@@ -793,9 +957,130 @@ function CheckInKioskContent({ params }: Props) {
         isOpen={showPinModal}
         onClose={handlePinCancel}
         onSuccess={handlePinSuccess}
-        title={pinAction === 'lock' ? 'Enter PIN to Lock' : pinAction === 'unlock' ? 'Enter PIN to Unlock' : 'Enter PIN to Exit'}
-        description={pinAction === 'lock' ? 'Enter your PIN to lock the kiosk' : pinAction === 'unlock' ? 'Enter your PIN to unlock the kiosk' : 'Enter your PIN to return to dashboard'}
+        title={
+          pinAction === 'lock' ? 'Enter PIN to Lock' :
+          pinAction === 'unlock' ? 'Enter PIN to Unlock' :
+          pinAction === 'settings' ? 'Enter PIN for Settings' :
+          'Enter PIN to Exit'
+        }
+        description={
+          pinAction === 'lock' ? 'Enter your PIN to lock the kiosk' :
+          pinAction === 'unlock' ? 'Enter your PIN to unlock the kiosk' :
+          pinAction === 'settings' ? 'Enter your PIN to access camera settings' :
+          'Enter your PIN to return to dashboard'
+        }
       />
+
+      {/* Camera Settings Panel - Side by Side with Camera Preview */}
+      {showCameraSettings && (
+        <div className="fixed inset-0 bg-gray-900 z-50 flex flex-col">
+          {/* Header */}
+          <div className="p-4 border-b border-gray-800 flex items-center justify-between">
+            <h2 className="text-xl font-bold text-white">Camera Settings</h2>
+            <button
+              onClick={() => setShowCameraSettings(false)}
+              className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Content - Camera Preview + Settings */}
+          <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
+            {/* Camera Preview */}
+            <div className="flex-1 flex items-center justify-center p-4 md:p-6 bg-black">
+              <div className="w-full max-w-md">
+                <QRScanner
+                  scannerId="qr-reader-settings"
+                  onScan={() => {}} // No-op during settings
+                  isEnabled={true}
+                  hideControls={true}
+                  onCamerasDetected={handleCamerasDetected}
+                  selectedCamera={selectedCamera}
+                />
+                <p className="text-center text-gray-400 mt-4 text-sm">
+                  Camera Preview
+                </p>
+              </div>
+            </div>
+
+            {/* Settings Panel */}
+            <div className="md:w-80 bg-gray-800 p-6 overflow-y-auto border-t md:border-t-0 md:border-l border-gray-700">
+              <p className="text-gray-400 text-sm mb-4">
+                Select a camera to see the preview update:
+              </p>
+
+              {cameraSelectionMode === 'flip' ? (
+                <div className="space-y-3">
+                  <button
+                    onClick={() => handleCameraSettingChange('user')}
+                    className={`w-full p-4 rounded-xl flex items-center gap-4 transition-colors ${
+                      selectedCamera.facingMode === 'user' || !selectedCamera.facingMode
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                    }`}
+                  >
+                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    <div className="text-left">
+                      <div className="font-medium">Front Camera</div>
+                      <div className="text-sm opacity-75">Facing you</div>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => handleCameraSettingChange('environment')}
+                    className={`w-full p-4 rounded-xl flex items-center gap-4 transition-colors ${
+                      selectedCamera.facingMode === 'environment'
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                    }`}
+                  >
+                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <div className="text-left">
+                      <div className="font-medium">Rear Camera</div>
+                      <div className="text-sm opacity-75">Facing away</div>
+                    </div>
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {cameras.map(camera => (
+                    <button
+                      key={camera.id}
+                      onClick={() => handleCameraSettingChange(camera.id)}
+                      className={`w-full p-4 rounded-xl flex items-center gap-4 transition-colors ${
+                        selectedCamera.deviceId === camera.id
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                      }`}
+                    >
+                      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                      <div className="text-left">
+                        <div className="font-medium">{camera.label}</div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              <button
+                onClick={() => setShowCameraSettings(false)}
+                className="w-full mt-6 p-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-medium text-lg"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
