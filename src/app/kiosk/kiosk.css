@@ -1,0 +1,46 @@
+/* Kiosk-specific styles for iOS PWA mode */
+
+/* Prevent elastic scroll bounce on iOS */
+html,
+body {
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Kiosk container styles */
+.kiosk-container {
+  min-height: 100vh;
+  min-height: 100dvh; /* Dynamic viewport height for iOS */
+  background-color: #111827;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Respect notch and home indicator safe areas */
+.kiosk-safe-area {
+  padding-top: env(safe-area-inset-top);
+  padding-right: env(safe-area-inset-right);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+}
+
+/* Allow text selection in form inputs */
+.kiosk-container input,
+.kiosk-container textarea {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* Prevent zoom on double tap for buttons */
+.kiosk-container button {
+  touch-action: manipulation;
+}
+
+/* Fix for iOS PWA status bar */
+@supports (padding-top: env(safe-area-inset-top)) {
+  .kiosk-container {
+    padding-top: env(safe-area-inset-top);
+  }
+}
