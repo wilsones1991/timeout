@@ -9,8 +9,11 @@ body {
 
 /* Kiosk container styles */
 .kiosk-container {
-  min-height: 100vh;
-  min-height: 100dvh; /* Dynamic viewport height for iOS */
+  height: 100vh;
+  height: 100dvh; /* Dynamic viewport height for iOS */
+  max-height: 100vh;
+  max-height: 100dvh;
+  overflow: hidden;
   background-color: #111827;
   -webkit-user-select: none;
   user-select: none;

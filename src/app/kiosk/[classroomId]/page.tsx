@@ -968,8 +968,8 @@ export default function KioskPage({ params }: Props) {
 
   // Scanner screen (default)
   return (
-    <div className="min-h-screen min-h-[100dvh] bg-gray-900 flex flex-col kiosk-safe-area">
-      <header className="p-4 border-b border-gray-800 flex items-center justify-between">
+    <div className="h-full bg-gray-900 flex flex-col kiosk-safe-area overflow-hidden">
+      <header className="flex-shrink-0 p-4 border-b border-gray-800 flex items-center justify-between">
         <div className="w-10" /> {/* Spacer - no back button in kiosk mode */}
         <div className="text-center">
           <h1 className="text-2xl font-bold text-white">{classroom?.name}</h1>
@@ -1027,9 +1027,9 @@ export default function KioskPage({ params }: Props) {
         </div>
       </header>
 
-      <main className="flex-1 flex flex-col lg:flex-row">
+      <main className="flex-1 flex flex-col lg:flex-row min-h-0 overflow-hidden">
         {/* Scanner Section */}
-        <div className="flex-1 flex items-center justify-center p-6">
+        <div className="flex-1 flex items-center justify-center p-6 min-h-0 overflow-hidden">
           <div className="w-full max-w-lg">
             {cameraActive && !showCameraSettings ? (
               <div className="flex flex-col items-center">
@@ -1089,7 +1089,7 @@ export default function KioskPage({ params }: Props) {
         </div>
 
         {/* Queue & Waitlist Section */}
-        <div className="lg:w-80 bg-gray-800 border-t lg:border-t-0 lg:border-l border-gray-700 overflow-y-auto max-h-[40vh] lg:max-h-[calc(100vh-73px)]">
+        <div className="lg:w-80 lg:flex-shrink-0 bg-gray-800 border-t lg:border-t-0 lg:border-l border-gray-700 overflow-y-auto min-h-0 max-h-[35vh] lg:max-h-full">
           {/* Currently Out */}
           <div className="p-4 border-b border-gray-700">
             <h2 className="text-lg font-semibold text-white">
