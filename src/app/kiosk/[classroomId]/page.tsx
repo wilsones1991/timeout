@@ -94,7 +94,7 @@ export default function KioskPage({ params }: Props) {
   const [isLocked, setIsLocked] = useState(false)
   const [showPinModal, setShowPinModal] = useState(false)
   const [pinAction, setPinAction] = useState<
-    'lock' | 'unlock' | 'settings' | null
+    'lock' | 'unlock' | 'settings' | 'back' | null
   >(null)
   const [hasPin, setHasPin] = useState(false)
   const [showCameraSettings, setShowCameraSettings] = useState(false)
@@ -532,6 +532,10 @@ export default function KioskPage({ params }: Props) {
     } else if (pinAction === 'settings') {
       setShowCameraSettings(true)
       setCameraActive(true)
+    } else if (pinAction === 'back') {
+      window.history.replaceState(null, '', '/kiosk')
+      window.location.replace('/kiosk')
+      return
     }
     setPinAction(null)
   }
@@ -548,6 +552,16 @@ export default function KioskPage({ params }: Props) {
       return
     }
     setPinAction('settings')
+    setShowPinModal(true)
+  }
+
+  function handleBackAttempt() {
+    if (!hasPin) {
+      window.history.replaceState(null, '', '/kiosk')
+      window.location.replace('/kiosk')
+      return
+    }
+    setPinAction('back')
     setShowPinModal(true)
   }
 
@@ -970,7 +984,25 @@ export default function KioskPage({ params }: Props) {
   return (
     <div className="h-full bg-gray-900 flex flex-col kiosk-safe-area overflow-hidden">
       <header className="flex-shrink-0 p-4 border-b border-gray-800 flex items-center justify-between">
-        <div className="w-10" /> {/* Spacer - no back button in kiosk mode */}
+        <button
+          onClick={handleBackAttempt}
+          className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg"
+          title="Back to Classroom Selection"
+        >
+          <svg
+            className="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M10 19l-7-7m0 0l7-7m-7 7h18"
+            />
+          </svg>
+        </button>
         <div className="text-center">
           <h1 className="text-2xl font-bold text-white">{classroom?.name}</h1>
           <p className="text-gray-400 text-sm">
@@ -1237,14 +1269,18 @@ export default function KioskPage({ params }: Props) {
             ? 'Enter PIN to Lock'
             : pinAction === 'unlock'
               ? 'Enter PIN to Unlock'
-              : 'Enter PIN for Settings'
+              : pinAction === 'back'
+                ? 'Enter PIN to Exit'
+                : 'Enter PIN for Settings'
         }
         description={
           pinAction === 'lock'
             ? 'Enter your PIN to lock the kiosk'
             : pinAction === 'unlock'
               ? 'Enter your PIN to unlock the kiosk'
-              : 'Enter your PIN to access camera settings'
+              : pinAction === 'back'
+                ? 'Enter your PIN to return to classroom selection'
+                : 'Enter your PIN to access camera settings'
         }
       />
 
