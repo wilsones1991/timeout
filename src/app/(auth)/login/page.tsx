@@ -4,6 +4,7 @@ import { Suspense, useState } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import PasskeyButton from '@/components/PasskeyButton'
 
 function LoginForm() {
   const router = useRouter()
@@ -117,6 +118,24 @@ function LoginForm() {
           >
             {isLoading ? 'Signing in...' : 'Sign in'}
           </button>
+
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300" />
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-gray-50 text-gray-500">or</span>
+            </div>
+          </div>
+
+          <PasskeyButton
+            onSuccess={() => {
+              router.push(callbackUrl)
+              router.refresh()
+            }}
+            onError={(errorMsg) => setError(errorMsg)}
+            disabled={isLoading}
+          />
 
           <p className="text-center text-sm text-gray-600">
             Don&apos;t have an account?{' '}

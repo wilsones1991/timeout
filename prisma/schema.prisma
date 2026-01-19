@@ -20,6 +20,25 @@ model User {
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
   classrooms   Classroom[]
+  passkeys     Passkey[]
+}
+
+// Passkey model for WebAuthn authentication
+model Passkey {
+  id                  String    @id @default(cuid())
+  userId              String
+  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  credentialId        String    @unique // Base64URL-encoded credential ID
+  credentialPublicKey Bytes               // Raw public key bytes
+  counter             BigInt    @default(0)
+  deviceType          String    @default("singleDevice")
+  backedUp            Boolean   @default(false)
+  transports          String?             // JSON array of transport hints
+  name                String    @default("My Passkey")
+  createdAt           DateTime  @default(now())
+  lastUsedAt          DateTime?
+
+  @@index([userId])
 }
 
 // Classroom model

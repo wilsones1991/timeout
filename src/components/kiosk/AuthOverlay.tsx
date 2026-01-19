@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, FormEvent } from 'react'
+import PasskeyButton from '@/components/PasskeyButton'
 
 type AuthOverlayProps = {
   onSuccess: () => void
@@ -143,6 +144,22 @@ export default function AuthOverlay({
               'Sign In'
             )}
           </button>
+
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-700" />
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-gray-900 text-gray-500">or</span>
+            </div>
+          </div>
+
+          <PasskeyButton
+            variant="kiosk"
+            onSuccess={onSuccess}
+            onError={(errorMsg) => setError(errorMsg)}
+            disabled={isLoading}
+          />
         </form>
 
         <div className="mt-8 text-center">
