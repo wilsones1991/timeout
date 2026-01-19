@@ -16,6 +16,7 @@
     "@prisma/client": "^7.2.0",
     "@simplewebauthn/browser": "^9.0.1",
     "@simplewebauthn/server": "^9.0.3",
+    "@simplewebauthn/types": "^12.0.0",
     "bcryptjs": "^3.0.3",
     "better-sqlite3": "^12.6.0",
     "html5-qrcode": "^2.3.8",

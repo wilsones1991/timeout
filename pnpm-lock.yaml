@@ -23,6 +23,9 @@ importers:
       '@simplewebauthn/server':
         specifier: ^9.0.3
         version: 9.0.3
+      '@simplewebauthn/types':
+        specifier: ^12.0.0
+        version: 12.0.0
       bcryptjs:
         specifier: ^3.0.3
         version: 3.0.3
@@ -604,6 +607,10 @@ packages:
   '@simplewebauthn/server@9.0.3':
     resolution: {integrity: sha512-FMZieoBosrVLFxCnxPFD9Enhd1U7D8nidVDT4MsHc6l4fdVcjoeHjDueeXCloO1k5O/fZg1fsSXXPKbY2XTzDA==}
     engines: {node: '>=16.0.0'}
+
+  '@simplewebauthn/types@12.0.0':
+    resolution: {integrity: sha512-q6y8MkoV8V8jB4zzp18Uyj2I7oFp2/ONL8c3j8uT06AOWu3cIChc1au71QYHrP2b+xDapkGTiv+9lX7xkTlAsA==}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@simplewebauthn/types@9.0.1':
     resolution: {integrity: sha512-tGSRP1QvsAvsJmnOlRQyw/mvK9gnPtjEc5fg2+m8n+QUa+D7rvrKkOYyfpy42GTs90X3RDOnqJgfHt+qO67/+w==}
@@ -3289,6 +3296,8 @@ snapshots:
       cross-fetch: 4.1.0
     transitivePeerDependencies:
       - encoding
+
+  '@simplewebauthn/types@12.0.0': {}
 
   '@simplewebauthn/types@9.0.1': {}
 
