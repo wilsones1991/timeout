@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server'
 import { compare } from 'bcryptjs'
 import { prisma } from '@/lib/prisma'
 import { decrypt } from '@/lib/encryption'
-import { setKioskMode } from '@/lib/kiosk-mode'
-import { signIn } from '@/lib/auth'
+import { setKioskMode, clearKioskMode } from '@/lib/kiosk-mode'
+import { signIn, signOut } from '@/lib/auth'
 import { AuthError } from 'next-auth'
 
 // POST /api/kiosk/auth - AJAX authentication for kiosk mode (no redirects)
@@ -80,6 +80,30 @@ export async function POST(request: Request) {
     console.error('[kiosk/auth] Error:', error)
     return NextResponse.json(
       { error: 'An error occurred during authentication' },
+      { status: 500 }
+    )
+  }
+}
+
+// DELETE /api/kiosk/auth - Logout from kiosk mode
+export async function DELETE() {
+  try {
+    // Clear kiosk mode cookie
+    await clearKioskMode()
+
+    // Sign out from NextAuth session
+    try {
+      await signOut({ redirect: false })
+    } catch {
+      // signOut may throw NEXT_REDIRECT which is expected behavior
+      // Continue with logout response
+    }
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('[kiosk/auth] Logout error:', error)
+    return NextResponse.json(
+      { error: 'An error occurred during logout' },
       { status: 500 }
     )
   }

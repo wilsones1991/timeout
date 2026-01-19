@@ -5,7 +5,7 @@ import { useKioskSession } from '@/hooks/useKioskSession'
 import AuthOverlay from '@/components/kiosk/AuthOverlay'
 
 export default function KioskLandingPage() {
-  const { isLoading, isAuthenticated, user, classrooms, login, error } =
+  const { isLoading, isAuthenticated, user, classrooms, login, logout, error } =
     useKioskSession()
 
   // Register service worker for PWA
@@ -71,13 +71,24 @@ export default function KioskLandingPage() {
   return (
     <div className="min-h-screen min-h-[100dvh] bg-gray-900 flex flex-col kiosk-safe-area">
       <header className="p-6 border-b border-gray-800">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-white">Select Classroom</h1>
-          {user && (
-            <p className="text-gray-400 mt-1">
-              Signed in as {user.name || user.email}
-            </p>
-          )}
+        <div className="flex items-center justify-between">
+          <div className="flex-1" />
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-white">Select Classroom</h1>
+            {user && (
+              <p className="text-gray-400 mt-1">
+                Signed in as {user.name || user.email}
+              </p>
+            )}
+          </div>
+          <div className="flex-1 flex justify-end">
+            <button
+              onClick={() => logout()}
+              className="px-4 py-2 text-sm text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
+            >
+              Sign Out
+            </button>
+          </div>
         </div>
       </header>
 

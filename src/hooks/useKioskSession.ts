@@ -107,6 +107,33 @@ export function useKioskSession() {
     [checkSession]
   )
 
+  // Logout function
+  const logout = useCallback(async (): Promise<LoginResult> => {
+    try {
+      const response = await fetch('/api/kiosk/auth', {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        return { success: false, error: data.error }
+      }
+
+      // Reset state to logged out
+      setState({
+        isLoading: false,
+        isAuthenticated: false,
+        user: null,
+        classrooms: [],
+        error: null,
+      })
+
+      return { success: true }
+    } catch {
+      return { success: false, error: 'An error occurred during logout' }
+    }
+  }, [])
+
   // Initial session check on mount
   useEffect(() => {
     isMountedRef.current = true
@@ -147,6 +174,7 @@ export function useKioskSession() {
   return {
     ...state,
     login,
+    logout,
     checkSession,
   }
 }
