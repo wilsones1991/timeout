@@ -82,6 +82,7 @@ export default function QRScanner({ onScan, isEnabled, hideControls, onCamerasDe
   const [selectionMode, setSelectionMode] = useState<SelectionMode>('none')
   const [selectedCameraId, setSelectedCameraId] = useState<string | null>(null)
   const [camerasDetected, setCamerasDetected] = useState(false)
+  const [isPageVisible, setIsPageVisible] = useState(true)
   const scannerRef = useRef<Html5Qrcode | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const onScanRef = useRef(onScan)
@@ -96,6 +97,25 @@ export default function QRScanner({ onScan, isEnabled, hideControls, onCamerasDe
   useEffect(() => {
     onScanRef.current = onScan
   }, [onScan])
+
+  // Handle page visibility changes (critical for iOS PWA)
+  // When the app is backgrounded, iOS releases camera streams but doesn't notify JS.
+  // This causes the video element to show nothing when the app is resumed.
+  // By tracking visibility and restarting the scanner on resume, we ensure fresh streams.
+  useEffect(() => {
+    function handleVisibilityChange() {
+      if (document.visibilityState === 'visible') {
+        setIsPageVisible(true)
+      } else {
+        setIsPageVisible(false)
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [])
 
   // Detect available cameras on mount and determine selection mode
   useEffect(() => {
@@ -149,8 +169,9 @@ export default function QRScanner({ onScan, isEnabled, hideControls, onCamerasDe
     // Don't start until camera detection is complete
     if (!camerasDetected) return
 
-    // Don't start if disabled or no container
-    if (!isEnabled || !containerRef.current) {
+    // Don't start if disabled, page hidden, or no container
+    // Including isPageVisible ensures we stop when app is backgrounded and restart on resume
+    if (!isEnabled || !isPageVisible || !containerRef.current) {
       // Clean up if we were scanning
       if (scannerRef.current) {
         const scanner = scannerRef.current
@@ -255,7 +276,7 @@ export default function QRScanner({ onScan, isEnabled, hideControls, onCamerasDe
         })
       }
     }
-  }, [isEnabled, effectiveFacingMode, effectiveDeviceId, selectionMode, camerasDetected, scannerId])
+  }, [isEnabled, isPageVisible, effectiveFacingMode, effectiveDeviceId, selectionMode, camerasDetected, scannerId])
 
   const switchCamera = useCallback(() => {
     setFacingMode(prev => {
