@@ -7,9 +7,10 @@ const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token'
 
 export async function GET(request: NextRequest) {
   const session = await auth()
+  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000'
 
   if (!session?.user?.id) {
-    return NextResponse.redirect(new URL('/login', request.url))
+    return NextResponse.redirect(new URL('/login', baseUrl))
   }
 
   const searchParams = request.nextUrl.searchParams
@@ -19,7 +20,7 @@ export async function GET(request: NextRequest) {
 
   // Handle OAuth errors
   if (error) {
-    const errorUrl = new URL('/dashboard', request.url)
+    const errorUrl = new URL('/dashboard', baseUrl)
     errorUrl.searchParams.set('google', 'error')
     errorUrl.searchParams.set('error_message', error)
     return NextResponse.redirect(errorUrl)
@@ -27,7 +28,7 @@ export async function GET(request: NextRequest) {
 
   // Validate required params
   if (!code || !state) {
-    const errorUrl = new URL('/dashboard', request.url)
+    const errorUrl = new URL('/dashboard', baseUrl)
     errorUrl.searchParams.set('google', 'error')
     errorUrl.searchParams.set('error_message', 'Missing authorization code')
     return NextResponse.redirect(errorUrl)
@@ -35,7 +36,7 @@ export async function GET(request: NextRequest) {
 
   // Verify state matches the current user
   if (state !== session.user.id) {
-    const errorUrl = new URL('/dashboard', request.url)
+    const errorUrl = new URL('/dashboard', baseUrl)
     errorUrl.searchParams.set('google', 'error')
     errorUrl.searchParams.set('error_message', 'Invalid state parameter')
     return NextResponse.redirect(errorUrl)
@@ -45,14 +46,13 @@ export async function GET(request: NextRequest) {
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET
 
   if (!clientId || !clientSecret) {
-    const errorUrl = new URL('/dashboard', request.url)
+    const errorUrl = new URL('/dashboard', baseUrl)
     errorUrl.searchParams.set('google', 'error')
     errorUrl.searchParams.set('error_message', 'Google OAuth not configured')
     return NextResponse.redirect(errorUrl)
   }
 
   // Exchange code for tokens
-  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000'
   const redirectUri = `${baseUrl}/api/google/callback`
 
   try {
@@ -73,7 +73,7 @@ export async function GET(request: NextRequest) {
     if (!tokenResponse.ok) {
       const errorText = await tokenResponse.text()
       console.error('Token exchange failed:', errorText)
-      const errorUrl = new URL('/dashboard', request.url)
+      const errorUrl = new URL('/dashboard', baseUrl)
       errorUrl.searchParams.set('google', 'error')
       errorUrl.searchParams.set('error_message', 'Failed to get access token')
       return NextResponse.redirect(errorUrl)
@@ -108,12 +108,12 @@ export async function GET(request: NextRequest) {
     })
 
     // Redirect to dashboard with success indicator
-    const successUrl = new URL('/dashboard', request.url)
+    const successUrl = new URL('/dashboard', baseUrl)
     successUrl.searchParams.set('google', 'connected')
     return NextResponse.redirect(successUrl)
   } catch (err) {
     console.error('OAuth callback error:', err)
-    const errorUrl = new URL('/dashboard', request.url)
+    const errorUrl = new URL('/dashboard', baseUrl)
     errorUrl.searchParams.set('google', 'error')
     errorUrl.searchParams.set('error_message', 'An unexpected error occurred')
     return NextResponse.redirect(errorUrl)
