@@ -1,6 +1,6 @@
 # Development Progress
 
-Last Updated: 2026-01-14
+Last Updated: 2026-01-24
 
 ## Completed
 
@@ -76,6 +76,31 @@ Last Updated: 2026-01-14
   - Full-screen lock overlay with unlock button
   - PIN entry required if PIN is set, otherwise immediate unlock/exit
 
+### Phase 5: Google Classroom Import
+- [x] GoogleAccount database model for storing OAuth tokens
+  - Encrypted access/refresh tokens at rest
+  - Token expiration tracking
+- [x] Google Classroom API helper library (`src/lib/google-classroom.ts`)
+  - Token management with automatic refresh
+  - Course listing with pagination
+  - Student fetching by course
+- [x] OAuth flow API routes
+  - `/api/google/auth` - Redirect to Google OAuth consent
+  - `/api/google/callback` - Handle OAuth callback, store tokens
+  - `/api/google/status` - Check connection status
+  - `/api/google/disconnect` - Remove Google account connection
+- [x] Import API routes
+  - `/api/google/courses` - List teacher's active courses with student counts
+  - `/api/google/courses/[courseId]/students` - Preview students in a course
+  - `/api/google/import` - Import selected courses as classrooms with students
+- [x] Import modal UI (`src/components/GoogleClassroomImportModal.tsx`)
+  - Multi-step wizard (Connect → Select → Importing → Results)
+  - Course selection with student count preview
+  - Progress indicator during import
+  - Success/error summary
+- [x] "Import from Google Classroom" button on dashboard
+- [x] Google icon component (`src/components/icons/GoogleIcon.tsx`)
+
 ### Additional Features
 - Wait List for bathrooms specifically
 - Sorting and filtering students
@@ -127,10 +152,18 @@ src/
 │   │   │           ├── route.ts       # GET (list), POST (add student)
 │   │   │           ├── [studentId]/route.ts # GET, PATCH, DELETE student
 │   │   │           └── bulk/route.ts  # POST (CSV bulk upload)
-│   │   └── user/pin/
-│   │       ├── route.ts               # POST (set), DELETE (remove) PIN
-│   │       ├── verify/route.ts        # POST verify PIN
-│   │       └── status/route.ts        # GET PIN status
+│   │   ├── user/pin/
+│   │   │   ├── route.ts               # POST (set), DELETE (remove) PIN
+│   │   │   ├── verify/route.ts        # POST verify PIN
+│   │   │   └── status/route.ts        # GET PIN status
+│   │   └── google/
+│   │       ├── auth/route.ts          # GET redirect to Google OAuth
+│   │       ├── callback/route.ts      # GET OAuth callback handler
+│   │       ├── status/route.ts        # GET connection status
+│   │       ├── disconnect/route.ts    # DELETE remove connection
+│   │       ├── courses/route.ts       # GET list teacher's courses
+│   │       ├── courses/[courseId]/students/route.ts  # GET students preview
+│   │       └── import/route.ts        # POST import courses
 │   ├── classroom/[id]/
 │   │   └── checkin/page.tsx           # Student kiosk interface
 │   └── dashboard/
@@ -140,8 +173,11 @@ src/
 │           └── history/page.tsx       # Check-in/out history
 ├── components/
 │   ├── ClassroomCard.tsx          # Classroom card with actions
-│   ├── ClassroomList.tsx          # Classroom grid with CRUD
+│   ├── ClassroomList.tsx          # Classroom grid with CRUD + Google import
 │   ├── ClassroomModal.tsx         # Create/edit classroom modal
+│   ├── GoogleClassroomImportModal.tsx  # Multi-step Google import wizard
+│   ├── icons/
+│   │   └── GoogleIcon.tsx         # Google "G" logo SVG
 │   ├── CSVUploadModal.tsx         # CSV bulk upload modal
 │   ├── DashboardHeader.tsx        # Dashboard header with settings
 │   ├── HistoryList.tsx            # Check-in/out history table
@@ -152,14 +188,16 @@ src/
 │   ├── StudentList.tsx            # Student table with CRUD + status
 │   └── StudentModal.tsx           # Add/edit student modal
 ├── lib/
-│   ├── auth.ts          # NextAuth configuration
-│   ├── encryption.ts    # AES-256-GCM encryption
-│   ├── pin.ts           # PIN validation, hashing, verification
-│   ├── prisma.ts        # Prisma client singleton
-│   ├── qrcode.ts        # QR code generation utilities
-│   └── utils.ts         # Password hashing, helpers
+│   ├── auth.ts              # NextAuth configuration
+│   ├── encryption.ts        # AES-256-GCM encryption
+│   ├── google-classroom.ts  # Google Classroom API helpers
+│   ├── pin.ts               # PIN validation, hashing, verification
+│   ├── prisma.ts            # Prisma client singleton
+│   ├── qrcode.ts            # QR code generation utilities
+│   └── utils.ts             # Password hashing, helpers
 ├── types/
-│   ├── index.ts         # Shared TypeScript types
-│   └── next-auth.d.ts   # NextAuth type extensions
+│   ├── index.ts              # Shared TypeScript types
+│   ├── next-auth.d.ts        # NextAuth type extensions
+│   └── google-classroom.ts   # Google Classroom API types
 └── hooks/               # (ready for custom hooks)
 ```

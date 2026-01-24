@@ -1,8 +1,11 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useSearchParams } from 'next/navigation'
 import ClassroomCard from './ClassroomCard'
 import ClassroomModal from './ClassroomModal'
+import GoogleClassroomImportModal from './GoogleClassroomImportModal'
+import GoogleIcon from './icons/GoogleIcon'
 
 type Classroom = {
   id: string
@@ -20,6 +23,25 @@ export default function ClassroomList() {
   const [error, setError] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingClassroom, setEditingClassroom] = useState<Classroom | null>(null)
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false)
+  const [googleJustConnected, setGoogleJustConnected] = useState(false)
+
+  const searchParams = useSearchParams()
+
+  // Check for Google OAuth callback
+  useEffect(() => {
+    const googleParam = searchParams.get('google')
+    if (googleParam === 'connected') {
+      setGoogleJustConnected(true)
+      setIsImportModalOpen(true)
+      // Clean up URL
+      window.history.replaceState({}, '', '/dashboard')
+    } else if (googleParam === 'error') {
+      const errorMessage = searchParams.get('error_message') || 'Failed to connect Google account'
+      setError(errorMessage)
+      window.history.replaceState({}, '', '/dashboard')
+    }
+  }, [searchParams])
 
   const fetchClassrooms = useCallback(async () => {
     try {
@@ -127,12 +149,21 @@ export default function ClassroomList() {
         <h2 className="text-xl font-semibold text-gray-900">
           Your Classrooms
         </h2>
-        <button
-          onClick={openCreateModal}
-          className="px-4 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700"
-        >
-          Create Classroom
-        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={() => setIsImportModalOpen(true)}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-white text-gray-700 font-medium rounded-md border border-gray-300 hover:bg-gray-50"
+          >
+            <GoogleIcon className="w-5 h-5" />
+            Import from Google Classroom
+          </button>
+          <button
+            onClick={openCreateModal}
+            className="px-4 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700"
+          >
+            Create Classroom
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -183,6 +214,16 @@ export default function ClassroomList() {
         onClose={closeModal}
         onSave={editingClassroom ? handleUpdate : handleCreate}
         classroom={editingClassroom}
+      />
+
+      <GoogleClassroomImportModal
+        isOpen={isImportModalOpen}
+        onClose={() => {
+          setIsImportModalOpen(false)
+          setGoogleJustConnected(false)
+        }}
+        onImportComplete={fetchClassrooms}
+        initialConnected={googleJustConnected}
       />
     </div>
   )

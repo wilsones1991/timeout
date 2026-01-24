@@ -12,15 +12,31 @@ datasource db {
 
 // User (Teacher) model
 model User {
-  id           String      @id @default(cuid())
-  email        String      @unique
-  name         String?     // Encrypted at rest
-  passwordHash String
-  pinHash      String?     // Optional hashed PIN for kiosk lock
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-  classrooms   Classroom[]
-  passkeys     Passkey[]
+  id            String         @id @default(cuid())
+  email         String         @unique
+  name          String?        // Encrypted at rest
+  passwordHash  String
+  pinHash       String?        // Optional hashed PIN for kiosk lock
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  classrooms    Classroom[]
+  passkeys      Passkey[]
+  googleAccount GoogleAccount?
+}
+
+// Google Account for Classroom API access (import only, not login)
+model GoogleAccount {
+  id           String    @id @default(cuid())
+  userId       String    @unique
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken  String    // Encrypted at rest
+  refreshToken String?   // Encrypted at rest
+  expiresAt    DateTime?
+  scope        String
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([userId])
 }
 
 // Passkey model for WebAuthn authentication
