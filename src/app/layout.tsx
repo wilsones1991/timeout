@@ -13,13 +13,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Classroom Check-In",
+  title: "Timeout",
   description: "Student check-in/out kiosk for classrooms",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Check-In",
+    title: "Timeout",
   },
   icons: {
     icon: [

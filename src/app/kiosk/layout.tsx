@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import './kiosk.css'
 
 export const metadata: Metadata = {
-  title: 'Kiosk - Classroom Check-In',
+  title: 'Kiosk - Timeout',
   robots: {
     index: false,
     follow: false,

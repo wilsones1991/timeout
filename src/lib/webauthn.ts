@@ -16,7 +16,7 @@ import { prisma } from './prisma'
 
 // WebAuthn configuration from environment
 const rpID = process.env.WEBAUTHN_RP_ID || 'localhost'
-const rpName = process.env.WEBAUTHN_RP_NAME || 'Classroom Check-In'
+const rpName = process.env.WEBAUTHN_RP_NAME || 'Timeout'
 const origin = process.env.WEBAUTHN_ORIGIN || 'http://localhost:3000'
 
 export interface PasskeyInfo {

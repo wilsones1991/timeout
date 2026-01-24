@@ -1,6 +1,6 @@
 {
-  "name": "Classroom Check-In Kiosk",
-  "short_name": "Check-In",
+  "name": "Timeout",
+  "short_name": "Timeout",
   "description": "Student check-in/out kiosk for classrooms",
   "start_url": "/kiosk",
   "scope": "/kiosk",

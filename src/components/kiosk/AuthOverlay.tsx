@@ -48,7 +48,7 @@ export default function AuthOverlay({
       <div className="w-full max-w-md px-6">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-white mb-2">
-            Classroom Check-In
+            Timeout
           </h1>
           <p className="text-gray-400">
             {isSessionExpired
