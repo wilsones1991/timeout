@@ -500,13 +500,13 @@ function CheckInKioskContent({ params }: Props) {
   // Confirmation screen
   if (confirmation) {
     return (
-      <div className="min-h-screen bg-green-600 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-emerald-600 flex items-center justify-center p-4">
         <div className="text-center text-white">
           <svg className="h-24 w-24 mx-auto mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
           </svg>
           <h1 className="text-4xl font-bold mb-2">{confirmation}</h1>
-          <p className="text-xl text-green-100">Returning to scanner...</p>
+          <p className="text-xl text-emerald-100">Returning to scanner...</p>
         </div>
       </div>
     )
@@ -536,7 +536,7 @@ function CheckInKioskContent({ params }: Props) {
     // Student is approved from waitlist - show approval screen
     if (waitlistStatus?.status === 'approved') {
       return (
-        <div className="min-h-screen bg-green-600 flex flex-col">
+        <div className="min-h-screen bg-emerald-600 flex flex-col">
           <header className="p-4 text-center">
             <h1 className="text-2xl font-bold text-white">{classroom?.name}</h1>
           </header>
@@ -563,7 +563,7 @@ function CheckInKioskContent({ params }: Props) {
               <button
                 onClick={() => handleCheckOut(waitlistStatus.destination)}
                 disabled={isProcessing}
-                className="w-full py-6 text-2xl font-bold rounded-2xl bg-white text-green-600 hover:bg-green-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full py-6 text-2xl font-bold rounded-2xl bg-white text-emerald-600 hover:bg-emerald-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isProcessing ? (
                   <span className="flex items-center justify-center gap-3">
@@ -629,7 +629,7 @@ function CheckInKioskContent({ params }: Props) {
     }
 
     return (
-      <div className={`min-h-screen ${isOut ? 'bg-amber-600' : 'bg-blue-600'} flex flex-col`}>
+      <div className={`min-h-screen ${isOut ? 'bg-amber-600' : 'bg-primary'} flex flex-col`}>
         <header className="p-4 text-center">
           <h1 className="text-2xl font-bold text-white">{classroom?.name}</h1>
         </header>
@@ -663,7 +663,7 @@ function CheckInKioskContent({ params }: Props) {
                 <button
                   onClick={handleCheckIn}
                   disabled={isProcessing}
-                  className="w-full py-6 text-2xl font-bold rounded-2xl bg-green-500 hover:bg-green-400 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full py-6 text-2xl font-bold rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isProcessing ? (
                     <span className="flex items-center justify-center gap-3">
@@ -794,6 +794,7 @@ function CheckInKioskContent({ params }: Props) {
                   hideControls={true}
                   onCamerasDetected={handleCamerasDetected}
                   selectedCamera={selectedCamera}
+                  variant="dark"
                 />
                 <button
                   onClick={handleDeactivateCamera}
@@ -809,7 +810,7 @@ function CheckInKioskContent({ params }: Props) {
                   onClick={handleActivateCamera}
                   className="flex flex-col items-center justify-center text-white hover:scale-105 transition-transform"
                 >
-                  <div className="w-32 h-32 rounded-full bg-blue-600 hover:bg-blue-500 flex items-center justify-center mb-6">
+                  <div className="w-32 h-32 rounded-full bg-primary hover:bg-primary-hover flex items-center justify-center mb-6">
                     <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -859,7 +860,7 @@ function CheckInKioskContent({ params }: Props) {
                       {item.studentName}
                     </div>
                     {item.destination && (
-                      <div className="text-sm text-blue-400">
+                      <div className="text-sm text-primary-light">
                         {item.destination}
                       </div>
                     )}
@@ -899,14 +900,14 @@ function CheckInKioskContent({ params }: Props) {
                           key={entry.id}
                           className={`p-4 ${
                             entry.status === 'approved'
-                              ? 'bg-green-900/30'
+                              ? 'bg-emerald-900/30'
                               : ''
                           }`}
                         >
                           <div className="flex items-center gap-3">
                             <span className={`w-7 h-7 flex items-center justify-center rounded-full text-sm font-bold ${
                               entry.status === 'approved'
-                                ? 'bg-green-500 text-white'
+                                ? 'bg-emerald-500 text-white'
                                 : 'bg-gray-600 text-gray-200'
                             }`}>
                               {entry.position}
@@ -916,7 +917,7 @@ function CheckInKioskContent({ params }: Props) {
                                 {entry.studentName}
                               </div>
                               {entry.status === 'approved' && (
-                                <div className="text-sm text-green-400 font-medium">
+                                <div className="text-sm text-emerald-400 font-medium">
                                   Ready to go!
                                 </div>
                               )}
@@ -944,7 +945,7 @@ function CheckInKioskContent({ params }: Props) {
             <p className="text-gray-400 mb-8">{classroom?.name}</p>
             <button
               onClick={handleUnlockAttempt}
-              className="px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white text-xl font-medium rounded-xl"
+              className="px-8 py-4 bg-primary hover:bg-primary-hover text-white text-xl font-medium rounded-xl"
             >
               Unlock
             </button>
@@ -999,6 +1000,7 @@ function CheckInKioskContent({ params }: Props) {
                   hideControls={true}
                   onCamerasDetected={handleCamerasDetected}
                   selectedCamera={selectedCamera}
+                  variant="dark"
                 />
                 <p className="text-center text-gray-400 mt-4 text-sm">
                   Camera Preview
@@ -1018,7 +1020,7 @@ function CheckInKioskContent({ params }: Props) {
                     onClick={() => handleCameraSettingChange('user')}
                     className={`w-full p-4 rounded-xl flex items-center gap-4 transition-colors ${
                       selectedCamera.facingMode === 'user' || !selectedCamera.facingMode
-                        ? 'bg-blue-600 text-white'
+                        ? 'bg-primary text-white'
                         : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                     }`}
                   >
@@ -1034,7 +1036,7 @@ function CheckInKioskContent({ params }: Props) {
                     onClick={() => handleCameraSettingChange('environment')}
                     className={`w-full p-4 rounded-xl flex items-center gap-4 transition-colors ${
                       selectedCamera.facingMode === 'environment'
-                        ? 'bg-blue-600 text-white'
+                        ? 'bg-primary text-white'
                         : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                     }`}
                   >
@@ -1056,7 +1058,7 @@ function CheckInKioskContent({ params }: Props) {
                       onClick={() => handleCameraSettingChange(camera.id)}
                       className={`w-full p-4 rounded-xl flex items-center gap-4 transition-colors ${
                         selectedCamera.deviceId === camera.id
-                          ? 'bg-blue-600 text-white'
+                          ? 'bg-primary text-white'
                           : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                       }`}
                     >
@@ -1073,7 +1075,7 @@ function CheckInKioskContent({ params }: Props) {
 
               <button
                 onClick={() => setShowCameraSettings(false)}
-                className="w-full mt-6 p-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-medium text-lg"
+                className="w-full mt-6 p-4 bg-primary hover:bg-primary-hover text-white rounded-xl font-medium text-lg"
               >
                 Done
               </button>

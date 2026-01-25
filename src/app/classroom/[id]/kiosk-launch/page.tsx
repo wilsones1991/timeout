@@ -93,7 +93,7 @@ export default function KioskLaunchPage({ params }: Props) {
       <div className="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full text-center">
         {status === 'checking' && (
           <>
-            <svg className="animate-spin h-12 w-12 mx-auto mb-4 text-blue-600" fill="none" viewBox="0 0 24 24">
+            <svg className="animate-spin h-12 w-12 mx-auto mb-4 text-primary" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
             </svg>
@@ -103,7 +103,7 @@ export default function KioskLaunchPage({ params }: Props) {
 
         {status === 'opening' && (
           <>
-            <svg className="animate-spin h-12 w-12 mx-auto mb-4 text-blue-600" fill="none" viewBox="0 0 24 24">
+            <svg className="animate-spin h-12 w-12 mx-auto mb-4 text-primary" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
             </svg>
@@ -114,7 +114,7 @@ export default function KioskLaunchPage({ params }: Props) {
 
         {status === 'opened' && (
           <>
-            <svg className="h-16 w-16 mx-auto mb-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="h-16 w-16 mx-auto mb-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
             <h1 className="text-xl font-semibold text-gray-900">Kiosk Opened</h1>
@@ -125,7 +125,7 @@ export default function KioskLaunchPage({ params }: Props) {
             <div className="mt-6 space-y-3">
               <button
                 onClick={handleOpenManually}
-                className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                className="w-full px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover"
               >
                 Open Again
               </button>
@@ -155,7 +155,7 @@ export default function KioskLaunchPage({ params }: Props) {
             <div className="mt-6 space-y-3">
               <button
                 onClick={handleOpenManually}
-                className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                className="w-full px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover"
               >
                 Try Opening Manually
               </button>

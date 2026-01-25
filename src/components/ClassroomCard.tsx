@@ -46,13 +46,13 @@ export default function ClassroomCard({ classroom, onEdit, onDelete }: Props) {
         <div className="mt-4 flex items-center gap-2">
           <Link
             href={`/dashboard/classroom/${classroom.id}`}
-            className="flex-1 text-center px-3 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md"
+            className="flex-1 text-center px-3 py-2 text-sm font-medium text-white bg-primary hover:bg-primary-hover rounded-md"
           >
             Manage
           </Link>
           <Link
             href={`/classroom/${classroom.id}/kiosk-launch`}
-            className="px-3 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-md"
+            className="px-3 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-md"
           >
             Launch Kiosk
           </Link>

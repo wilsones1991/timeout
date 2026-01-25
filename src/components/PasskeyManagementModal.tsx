@@ -199,12 +199,12 @@ export default function PasskeyManagementModal({ isOpen, onClose }: Props) {
               value={newPasskeyName}
               onChange={(e) => setNewPasskeyName(e.target.value)}
               placeholder="Passkey name (optional)"
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
             />
             <button
               onClick={handleRegisterPasskey}
               disabled={isRegistering}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+              className="px-4 py-2 bg-primary hover:bg-primary-hover text-white font-medium rounded-lg disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
             >
               {isRegistering ? 'Adding...' : 'Add Passkey'}
             </button>
@@ -238,12 +238,12 @@ export default function PasskeyManagementModal({ isOpen, onClose }: Props) {
                           if (e.key === 'Enter') handleRenamePasskey(passkey.id)
                           if (e.key === 'Escape') setEditingId(null)
                         }}
-                        className="flex-1 px-2 py-1 border border-gray-300 rounded text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="flex-1 px-2 py-1 border border-gray-300 rounded text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                         autoFocus
                       />
                       <button
                         onClick={() => handleRenamePasskey(passkey.id)}
-                        className="px-2 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-500"
+                        className="px-2 py-1 bg-primary text-white text-sm rounded hover:bg-primary-hover"
                       >
                         Save
                       </button>
@@ -274,7 +274,7 @@ export default function PasskeyManagementModal({ isOpen, onClose }: Props) {
                           {passkey.name}
                         </span>
                         {passkey.backedUp && (
-                          <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full">
+                          <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs rounded-full">
                             Synced
                           </span>
                         )}

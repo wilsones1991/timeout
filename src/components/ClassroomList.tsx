@@ -159,7 +159,7 @@ export default function ClassroomList() {
           </button>
           <button
             onClick={openCreateModal}
-            className="px-4 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700"
+            className="px-4 py-2 bg-primary text-white font-medium rounded-md hover:bg-primary-hover"
           >
             Create Classroom
           </button>
@@ -191,7 +191,7 @@ export default function ClassroomList() {
           </p>
           <button
             onClick={openCreateModal}
-            className="px-4 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700"
+            className="px-4 py-2 bg-primary text-white font-medium rounded-md hover:bg-primary-hover"
           >
             Create Classroom
           </button>

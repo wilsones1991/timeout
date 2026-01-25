@@ -15,13 +15,13 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Timeout",
+  title: "Class Card",
   description: "Student check-in/out kiosk for classrooms",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Timeout",
+    title: "Class Card",
   },
   icons: {
     icon: [

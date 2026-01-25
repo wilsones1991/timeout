@@ -385,7 +385,7 @@ export default function StudentList({ classroomId, classroomName }: Props) {
           </button>
           <button
             onClick={openAddModal}
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md"
+            className="px-4 py-2 text-sm font-medium text-white bg-primary hover:bg-primary-hover rounded-md"
           >
             Add Student
           </button>
@@ -424,7 +424,7 @@ export default function StudentList({ classroomId, classroomName }: Props) {
             </button>
             <button
               onClick={openAddModal}
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md"
+              className="px-4 py-2 text-sm font-medium text-white bg-primary hover:bg-primary-hover rounded-md"
             >
               Add Student
             </button>
@@ -458,7 +458,7 @@ export default function StudentList({ classroomId, classroomName }: Props) {
 
                 // Determine status: Out > Waiting > In
                 let statusText = 'In'
-                let statusClass = 'bg-green-100 text-green-800'
+                let statusClass = 'bg-emerald-100 text-emerald-800'
 
                 if (isOut) {
                   statusText = destination ? `Out: ${destination}` : 'Out'
@@ -466,9 +466,9 @@ export default function StudentList({ classroomId, classroomName }: Props) {
                 } else if (waitlistEntry) {
                   statusText = `Waiting: ${waitlistEntry.destination} (#${waitlistEntry.position})`
                   if (waitlistEntry.status === 'approved') {
-                    statusClass = 'bg-blue-100 text-blue-800'
+                    statusClass = 'bg-primary-light text-primary'
                   } else {
-                    statusClass = 'bg-purple-100 text-purple-800'
+                    statusClass = 'bg-violet-100 text-violet-800'
                   }
                 }
 
@@ -496,7 +496,7 @@ export default function StudentList({ classroomId, classroomName }: Props) {
                         <button
                           onClick={() => handleManualCheckInOut(student)}
                           disabled={isProcessing}
-                          className="font-medium mr-3 text-green-600 hover:text-green-800 disabled:opacity-50"
+                          className="font-medium mr-3 text-emerald-600 hover:text-emerald-800 disabled:opacity-50"
                         >
                           {isProcessing ? '...' : 'Check In'}
                         </button>
@@ -530,7 +530,7 @@ export default function StudentList({ classroomId, classroomName }: Props) {
                       )}
                       <button
                         onClick={() => openEditModal(student)}
-                        className="text-blue-600 hover:text-blue-800 font-medium mr-3"
+                        className="text-primary hover:text-primary-hover font-medium mr-3"
                       >
                         Edit
                       </button>
@@ -628,7 +628,7 @@ export default function StudentList({ classroomId, classroomName }: Props) {
                         <>
                           <button
                             onClick={() => performCheckInOut(checkoutStudent.id, 'out', dest.name, false)}
-                            className="flex-1 px-3 py-2 text-sm font-medium text-purple-700 bg-purple-100 hover:bg-purple-200 rounded-md"
+                            className="flex-1 px-3 py-2 text-sm font-medium text-violet-700 bg-violet-100 hover:bg-violet-200 rounded-md"
                           >
                             Add to Wait List
                           </button>

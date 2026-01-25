@@ -84,7 +84,7 @@ export default function ClassroomModal({ isOpen, onClose, onSave, classroom }: P
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g., Period 1 - English"
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary text-gray-900"
               autoFocus
             />
           </div>
@@ -96,7 +96,7 @@ export default function ClassroomModal({ isOpen, onClose, onSave, classroom }: P
                   type="checkbox"
                   checked={isActive}
                   onChange={(e) => setIsActive(e.target.checked)}
-                  className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  className="h-4 w-4 text-primary border-gray-300 rounded focus:ring-primary"
                 />
                 <span className="text-sm text-gray-700">Active</span>
               </label>
@@ -117,7 +117,7 @@ export default function ClassroomModal({ isOpen, onClose, onSave, classroom }: P
             <button
               type="submit"
               disabled={isLoading}
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 text-sm font-medium text-white bg-primary hover:bg-primary-hover rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? 'Saving...' : isEditing ? 'Save Changes' : 'Create Classroom'}
             </button>

@@ -64,7 +64,7 @@ export default function WaitListWidgetPage({ params }: Props) {
         <div className="max-w-2xl mx-auto space-y-8">
           {Object.entries(byDestination).map(([destination, destEntries]) => (
             <div key={destination}>
-              <h2 className="text-2xl font-semibold text-blue-400 mb-4 flex items-center gap-3">
+              <h2 className="text-2xl font-semibold text-primary-light mb-4 flex items-center gap-3">
                 <span>{destination}</span>
                 <span className="text-lg text-gray-500">({destEntries.length})</span>
               </h2>
@@ -75,13 +75,13 @@ export default function WaitListWidgetPage({ params }: Props) {
                     key={entry.id}
                     className={`p-5 rounded-xl flex items-center gap-4 ${
                       entry.status === 'approved'
-                        ? 'bg-green-600 animate-pulse'
+                        ? 'bg-emerald-600 animate-pulse'
                         : 'bg-gray-800'
                     }`}
                   >
                     <span className={`w-12 h-12 flex items-center justify-center rounded-full text-xl font-bold ${
                       entry.status === 'approved'
-                        ? 'bg-white text-green-600'
+                        ? 'bg-white text-emerald-600'
                         : 'bg-gray-700 text-white'
                     }`}>
                       {entry.position}
@@ -92,7 +92,7 @@ export default function WaitListWidgetPage({ params }: Props) {
                         {entry.studentName}
                       </div>
                       {entry.status === 'approved' && (
-                        <div className="text-lg text-green-200 font-medium">
+                        <div className="text-lg text-emerald-200 font-medium">
                           APPROVED - Ready to go!
                         </div>
                       )}

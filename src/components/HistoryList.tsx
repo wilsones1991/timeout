@@ -134,7 +134,7 @@ export default function HistoryList({ classroomId }: Props) {
               type="date"
               value={dateFrom}
               onChange={(e) => setDateFrom(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+              className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-primary focus:border-primary"
             />
           </div>
           <div>
@@ -145,12 +145,12 @@ export default function HistoryList({ classroomId }: Props) {
               type="date"
               value={dateTo}
               onChange={(e) => setDateTo(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+              className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-primary focus:border-primary"
             />
           </div>
           <button
             onClick={handleFilter}
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md"
+            className="px-4 py-2 text-sm font-medium text-white bg-primary hover:bg-primary-hover rounded-md"
           >
             Filter
           </button>
@@ -260,7 +260,7 @@ export default function HistoryList({ classroomId }: Props) {
                           Manual
                         </span>
                       ) : (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-600">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary-light text-primary">
                           Scan
                         </span>
                       )}
@@ -276,7 +276,7 @@ export default function HistoryList({ classroomId }: Props) {
               <button
                 onClick={() => fetchHistory(false)}
                 disabled={isLoading}
-                className="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-800 disabled:opacity-50"
+                className="px-4 py-2 text-sm font-medium text-primary hover:text-primary-hover disabled:opacity-50"
               >
                 {isLoading ? 'Loading...' : 'Load More'}
               </button>

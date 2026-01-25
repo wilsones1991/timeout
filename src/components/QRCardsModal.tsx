@@ -185,13 +185,13 @@ export default function QRCardsModal({ isOpen, onClose, students, classroomName 
             </span>
             <button
               onClick={selectAll}
-              className="text-sm text-blue-600 hover:text-blue-800"
+              className="text-sm text-primary hover:text-primary-hover"
             >
               Select All
             </button>
             <button
               onClick={selectNone}
-              className="text-sm text-blue-600 hover:text-blue-800"
+              className="text-sm text-primary hover:text-primary-hover"
             >
               Select None
             </button>
@@ -199,7 +199,7 @@ export default function QRCardsModal({ isOpen, onClose, students, classroomName 
           <button
             onClick={generatePDF}
             disabled={isGeneratingPDF || selectedStudents.size === 0}
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 rounded-md flex items-center gap-2"
+            className="px-4 py-2 text-sm font-medium text-white bg-primary hover:bg-primary-hover disabled:bg-gray-400 rounded-md flex items-center gap-2"
           >
             {isGeneratingPDF ? (
               <>
@@ -223,7 +223,7 @@ export default function QRCardsModal({ isOpen, onClose, students, classroomName 
         <div className="flex-1 overflow-y-auto p-6">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
-              <svg className="animate-spin h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24">
+              <svg className="animate-spin h-8 w-8 text-primary" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
               </svg>
@@ -241,7 +241,7 @@ export default function QRCardsModal({ isOpen, onClose, students, classroomName 
                   onClick={() => toggleStudent(student.id)}
                   className={`border-2 rounded-lg p-3 cursor-pointer transition-all ${
                     selectedStudents.has(student.id)
-                      ? 'border-blue-500 bg-blue-50'
+                      ? 'border-primary bg-primary-light'
                       : 'border-gray-200 bg-white hover:border-gray-300'
                   }`}
                 >
@@ -263,7 +263,7 @@ export default function QRCardsModal({ isOpen, onClose, students, classroomName 
                   </div>
                   {selectedStudents.has(student.id) && (
                     <div className="absolute top-2 right-2">
-                      <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                      <svg className="w-5 h-5 text-primary" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                       </svg>
                     </div>

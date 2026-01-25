@@ -212,7 +212,7 @@ export default function GoogleClassroomImportModal({
                 <button
                   onClick={handleImport}
                   disabled={selectedCourses.size === 0 || isLoading}
-                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-2 text-sm font-medium text-white bg-primary rounded-md hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Import {selectedCourses.size > 0 && `(${selectedCourses.size})`}
                 </button>
@@ -222,7 +222,7 @@ export default function GoogleClassroomImportModal({
             {step === 'results' && (
               <button
                 onClick={handleClose}
-                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+                className="px-4 py-2 text-sm font-medium text-white bg-primary rounded-md hover:bg-primary-hover"
               >
                 Done
               </button>
@@ -273,7 +273,7 @@ function SelectStep({
   if (isLoading) {
     return (
       <div className="py-12 text-center">
-        <div className="inline-block w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+        <div className="inline-block w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
         <p className="mt-4 text-sm text-gray-600">Loading your courses...</p>
       </div>
     )
@@ -307,7 +307,7 @@ function SelectStep({
         </p>
         <button
           onClick={onSelectAll}
-          className="text-sm text-blue-600 hover:text-blue-700"
+          className="text-sm text-primary hover:text-primary-hover"
         >
           {allSelected ? 'Deselect all' : 'Select all'}
         </button>
@@ -323,7 +323,7 @@ function SelectStep({
               type="checkbox"
               checked={selectedCourses.has(course.id)}
               onChange={() => onToggle(course.id)}
-              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
             />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-900 truncate">
@@ -350,7 +350,7 @@ function SelectStep({
 function ImportingStep() {
   return (
     <div className="py-12 text-center">
-      <div className="inline-block w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+      <div className="inline-block w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
       <p className="mt-4 text-sm text-gray-600">
         Importing your courses and students...
       </p>
@@ -376,14 +376,14 @@ function ResultsStep({
     <div>
       <div className="text-center mb-6">
         <div className={`mx-auto w-16 h-16 rounded-full flex items-center justify-center mb-4 ${
-          hasErrors ? 'bg-yellow-100' : 'bg-green-100'
+          hasErrors ? 'bg-yellow-100' : 'bg-emerald-100'
         }`}>
           {hasErrors ? (
             <svg className="w-8 h-8 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
           ) : (
-            <svg className="w-8 h-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-8 h-8 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
           )}
@@ -402,7 +402,7 @@ function ResultsStep({
           {results.results.map((result, i) => (
             <div key={i} className="p-3 flex items-center gap-3">
               {result.success ? (
-                <svg className="w-5 h-5 text-green-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-5 h-5 text-emerald-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               ) : (

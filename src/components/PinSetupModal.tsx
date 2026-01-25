@@ -224,7 +224,7 @@ export default function PinSetupModal({ isOpen, onClose, hasExistingPin, onPinUp
           <button
             onClick={handleNext}
             disabled={pin.length < 4 || isSubmitting}
-            className="flex-1 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 py-3 rounded-xl bg-primary hover:bg-primary-hover text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSubmitting ? 'Saving...' : step === 'enter' ? 'Next' : 'Save PIN'}
           </button>

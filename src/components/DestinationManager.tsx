@@ -187,11 +187,11 @@ export default function DestinationManager({ classroomId }: Props) {
                     value={editCapacity}
                     onChange={(e) => setEditCapacity(e.target.value)}
                     placeholder="Unlimited"
-                    className="text-black w-24 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="text-gray-900 w-24 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-primary focus:border-primary"
                   />
                   <button
                     onClick={() => saveCapacity(dest.id)}
-                    className="px-2 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+                    className="px-2 py-1 text-sm bg-primary text-white rounded hover:bg-primary-hover"
                   >
                     Save
                   </button>
@@ -211,7 +211,7 @@ export default function DestinationManager({ classroomId }: Props) {
                       </span>
                       <button
                         onClick={() => startEdit(dest)}
-                        className="text-blue-600 hover:text-blue-800"
+                        className="text-primary hover:text-primary-hover"
                       >
                         (edit)
                       </button>
@@ -223,7 +223,7 @@ export default function DestinationManager({ classroomId }: Props) {
                   ) : (
                     <button
                       onClick={() => startEdit(dest)}
-                      className="text-blue-600 hover:text-blue-800"
+                      className="text-primary hover:text-primary-hover"
                     >
                       + Add waiting room
                     </button>
@@ -257,7 +257,7 @@ export default function DestinationManager({ classroomId }: Props) {
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             placeholder="New destination name"
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
           />
           {!hasWaitingRoom && (
             <input
@@ -266,13 +266,13 @@ export default function DestinationManager({ classroomId }: Props) {
               value={newCapacity}
               onChange={(e) => setNewCapacity(e.target.value)}
               placeholder="Limit"
-              className="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
             />
           )}
           <button
             type="submit"
             disabled={!newName.trim() || isAdding}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isAdding ? 'Adding...' : 'Add'}
           </button>

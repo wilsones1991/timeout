@@ -10,6 +10,7 @@ type Props = {
   onCamerasDetected?: (cameras: CameraDevice[], selectionMode: SelectionMode) => void
   selectedCamera?: { facingMode?: FacingMode; deviceId?: string }
   scannerId?: string
+  variant?: 'light' | 'dark'
 }
 
 export type FacingMode = 'user' | 'environment'
@@ -72,7 +73,7 @@ async function stopScanner(scanner: Html5Qrcode | null): Promise<void> {
   }
 }
 
-export default function QRScanner({ onScan, isEnabled, hideControls, onCamerasDetected, selectedCamera, scannerId = 'qr-reader' }: Props) {
+export default function QRScanner({ onScan, isEnabled, hideControls, onCamerasDetected, selectedCamera, scannerId = 'qr-reader', variant = 'light' }: Props) {
   const [isScanning, setIsScanning] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [manualEntry, setManualEntry] = useState('')
@@ -342,10 +343,10 @@ export default function QRScanner({ onScan, isEnabled, hideControls, onCamerasDe
             </div>
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="w-64 h-64 border-4 border-white/80 rounded-lg relative">
-                <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-blue-400 rounded-tl-lg" />
-                <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-blue-400 rounded-tr-lg" />
-                <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-blue-400 rounded-bl-lg" />
-                <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-blue-400 rounded-br-lg" />
+                <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-primary rounded-tl-lg" />
+                <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-primary rounded-tr-lg" />
+                <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-primary rounded-bl-lg" />
+                <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-primary rounded-br-lg" />
               </div>
             </div>
           </div>
@@ -394,27 +395,19 @@ export default function QRScanner({ onScan, isEnabled, hideControls, onCamerasDe
 
       {/* Instructions */}
       {isScanning && (
-        <div className="mt-4 text-center">
-          <p className="text-lg text-gray-600">
-            Hold your QR code card up to the camera
-          </p>
-          {selectionMode === 'flip' && (
-            <p className="text-sm text-gray-500 mt-1">
-              Using {effectiveFacingMode === 'user' ? 'front' : 'rear'} camera
-            </p>
-          )}
-          {selectionMode === 'dropdown' && effectiveDeviceId && (
-            <p className="text-sm text-gray-500 mt-1">
-              {cameras.find(c => c.id === effectiveDeviceId)?.label || 'Camera'}
-            </p>
-          )}
-        </div>
+        <p className={`mt-4 text-lg text-center ${variant === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+          Hold your QR code card up to the camera
+        </p>
       )}
 
       {/* Manual Entry Toggle */}
       <button
         onClick={() => setShowManualEntry(!showManualEntry)}
-        className="mt-4 text-blue-600 hover:text-blue-800 text-sm font-medium"
+        className={`mt-6 px-6 py-3 text-base font-medium rounded-xl transition-colors ${
+          variant === 'dark'
+            ? 'bg-gray-700 hover:bg-gray-600 text-white border border-gray-600'
+            : 'bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-300'
+        }`}
       >
         {showManualEntry ? 'Hide manual entry' : 'Enter card ID manually'}
       </button>
@@ -428,13 +421,21 @@ export default function QRScanner({ onScan, isEnabled, hideControls, onCamerasDe
               value={manualEntry}
               onChange={(e) => setManualEntry(e.target.value)}
               placeholder="Enter card ID"
-              className="flex-1 px-4 py-3 text-lg border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+              className={`flex-1 px-4 py-3 text-lg rounded-lg outline-none ${
+                variant === 'dark'
+                  ? 'bg-gray-800 border-2 border-gray-500 text-white placeholder-gray-400 focus:border-primary-light focus:ring-2 focus:ring-primary-light'
+                  : 'bg-white border border-gray-300 text-gray-900 focus:ring-2 focus:ring-primary focus:border-primary'
+              }`}
               autoComplete="off"
             />
             <button
               type="submit"
               disabled={!manualEntry.trim()}
-              className="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+              className={`px-6 py-3 font-medium rounded-lg disabled:opacity-50 disabled:cursor-not-allowed ${
+                variant === 'dark'
+                  ? 'bg-emerald-600 hover:bg-emerald-500 text-white'
+                  : 'bg-primary hover:bg-primary-hover text-white'
+              }`}
             >
               Submit
             </button>

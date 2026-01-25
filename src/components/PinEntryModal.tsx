@@ -242,7 +242,7 @@ export default function PinEntryModal({ isOpen, onClose, onSuccess, title, descr
           <button
             onClick={handleSubmit}
             disabled={pin.length < 4 || isVerifying}
-            className="flex-1 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 py-3 rounded-xl bg-primary hover:bg-primary-hover text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isVerifying ? 'Verifying...' : 'Confirm'}
           </button>

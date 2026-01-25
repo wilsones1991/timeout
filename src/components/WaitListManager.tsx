@@ -171,7 +171,7 @@ export default function WaitListManager({ classroomId }: Props) {
         {hasStudentOutForCapacityDestination && !showAddForm && (
           <button
             onClick={() => setShowAddForm(true)}
-            className="px-3 py-1.5 text-sm font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-md flex items-center gap-1"
+            className="px-3 py-1.5 text-sm font-medium text-primary hover:text-primary-hover hover:bg-primary-light rounded-md flex items-center gap-1"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -188,7 +188,7 @@ export default function WaitListManager({ classroomId }: Props) {
       )}
 
       {showAddForm && (
-        <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+        <div className="mb-4 p-4 bg-primary-light border border-primary rounded-lg">
           <div className="flex items-center justify-between mb-3">
             <h4 className="font-medium text-gray-900">Add Student to Wait List</h4>
             <button
@@ -216,7 +216,7 @@ export default function WaitListManager({ classroomId }: Props) {
                   setSelectedDestinationId(e.target.value)
                   setSelectedStudentId('') // Reset student when destination changes
                 }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-primary focus:border-primary"
               >
                 <option value="">Select destination...</option>
                 {destinations.map((d) => (
@@ -235,7 +235,7 @@ export default function WaitListManager({ classroomId }: Props) {
                 value={selectedStudentId}
                 onChange={(e) => setSelectedStudentId(e.target.value)}
                 disabled={!selectedDestinationId}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-primary focus:border-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
               >
                 <option value="">Select student...</option>
                 {eligibleStudents.map((s) => (
@@ -261,7 +261,7 @@ export default function WaitListManager({ classroomId }: Props) {
             <button
               onClick={handleAddStudent}
               disabled={isAdding || !selectedStudentId || !selectedDestinationId}
-              className="px-3 py-1.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-3 py-1.5 text-sm font-medium text-white bg-primary hover:bg-primary-hover rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isAdding ? 'Adding...' : 'Add to Wait List'}
             </button>
@@ -288,7 +288,7 @@ export default function WaitListManager({ classroomId }: Props) {
                     key={entry.id}
                     className={`p-3 rounded-lg flex items-center justify-between ${
                       entry.status === 'approved'
-                        ? 'bg-green-50 border border-green-200'
+                        ? 'bg-emerald-50 border border-emerald-200'
                         : 'bg-gray-50'
                     }`}
                   >
@@ -302,7 +302,7 @@ export default function WaitListManager({ classroomId }: Props) {
                         </div>
                         <div className="text-sm text-gray-500">
                           {entry.status === 'approved' ? (
-                            <span className="text-green-600 font-medium">Approved</span>
+                            <span className="text-emerald-600 font-medium">Approved</span>
                           ) : (
                             <span>Waiting {getWaitDuration(entry.createdAt)}</span>
                           )}
@@ -315,7 +315,7 @@ export default function WaitListManager({ classroomId }: Props) {
                         <button
                           onClick={() => handleAction(entry.id, 'approve')}
                           disabled={actionInProgress === entry.id}
-                          className="px-2 py-1 text-sm text-green-600 hover:text-green-800 hover:bg-green-100 rounded disabled:opacity-50"
+                          className="px-2 py-1 text-sm text-emerald-600 hover:text-emerald-800 hover:bg-emerald-100 rounded disabled:opacity-50"
                           title="Approve now"
                         >
                           Approve

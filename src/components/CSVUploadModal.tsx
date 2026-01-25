@@ -130,7 +130,7 @@ export default function CSVUploadModal({ isOpen, onClose, onUpload }: Props) {
               <div className={`mb-4 px-4 py-3 rounded-md text-sm ${
                 result.errors.length > 0
                   ? 'bg-yellow-50 border border-yellow-200 text-yellow-800'
-                  : 'bg-green-50 border border-green-200 text-green-800'
+                  : 'bg-emerald-50 border border-emerald-200 text-emerald-800'
               }`}>
                 <p className="font-medium">
                   Successfully added {result.created} student{result.created !== 1 ? 's' : ''}!
@@ -157,7 +157,7 @@ export default function CSVUploadModal({ isOpen, onClose, onUpload }: Props) {
                 type="file"
                 accept=".csv,text/csv"
                 onChange={handleFileChange}
-                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-primary-light file:text-primary hover:file:bg-primary-lighter"
               />
             </div>
 
@@ -170,7 +170,7 @@ export default function CSVUploadModal({ isOpen, onClose, onUpload }: Props) {
                 onChange={(e) => setCsvText(e.target.value)}
                 placeholder="First Name,Last Name&#10;John,Smith&#10;Jane,Doe"
                 rows={6}
-                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-gray-900 text-sm font-mono"
+                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary text-gray-900 text-sm font-mono"
               />
             </div>
 
@@ -186,7 +186,7 @@ export default function CSVUploadModal({ isOpen, onClose, onUpload }: Props) {
                 <button
                   type="submit"
                   disabled={isLoading || !csvText.trim()}
-                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-2 text-sm font-medium text-white bg-primary hover:bg-primary-hover rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isLoading ? 'Uploading...' : 'Import Students'}
                 </button>
