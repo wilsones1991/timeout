@@ -355,7 +355,7 @@ function CheckInKioskContent({ params }: Props) {
 
       const data = await response.json()
       setQueue(data.queue || [])
-      setConfirmation(`${student.firstName} checked in`)
+      setConfirmation(`${student.firstName} is back in room`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to process')
       setScannerEnabled(true)
@@ -652,7 +652,7 @@ function CheckInKioskContent({ params }: Props) {
               /* Check IN screen - student is currently out */
               <>
                 <div className="mb-6 p-4 bg-white/20 rounded-2xl">
-                  <p className="text-lg">You are checked out</p>
+                  <p className="text-lg">You left the room</p>
                   {student.checkOutTime && (
                     <p className="text-sm text-white/80">
                       Since {new Date(student.checkOutTime).toLocaleTimeString()}
@@ -674,7 +674,7 @@ function CheckInKioskContent({ params }: Props) {
                       Processing...
                     </span>
                   ) : (
-                    'CHECK IN'
+                    "I'M BACK"
                   )}
                 </button>
               </>
@@ -754,7 +754,7 @@ function CheckInKioskContent({ params }: Props) {
         )}
         <div className="text-center">
           <h1 className="text-2xl font-bold text-white">{classroom?.name}</h1>
-          <p className="text-gray-400 text-sm">Scan your QR code to check in or out</p>
+          <p className="text-gray-400 text-sm">Scan your QR code to leave or come back</p>
         </div>
         <div className="flex items-center gap-1">
           {/* Camera Settings Button - only show if multiple cameras */}

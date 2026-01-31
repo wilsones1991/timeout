@@ -478,7 +478,7 @@ export default function KioskPage({ params }: Props) {
 
       const data = await response.json()
       setQueue(data.queue || [])
-      setConfirmation(`${student.firstName} checked in`)
+      setConfirmation(`${student.firstName} is back in room`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to process')
       setScannerEnabled(true)
@@ -867,7 +867,7 @@ export default function KioskPage({ params }: Props) {
             {isOut ? (
               <>
                 <div className="mb-6 p-4 bg-white/20 rounded-2xl">
-                  <p className="text-lg">You are checked out</p>
+                  <p className="text-lg">You left the room</p>
                   {student.checkOutTime && (
                     <p className="text-sm text-white/80">
                       Since{' '}
@@ -905,7 +905,7 @@ export default function KioskPage({ params }: Props) {
                       Processing...
                     </span>
                   ) : (
-                    'CHECK IN'
+                    "I'M BACK"
                   )}
                 </button>
               </>
@@ -1006,7 +1006,7 @@ export default function KioskPage({ params }: Props) {
         <div className="text-center">
           <h1 className="text-2xl font-bold text-white">{classroom?.name}</h1>
           <p className="text-gray-400 text-sm">
-            Scan your QR code to check in or out
+            Scan your QR code to leave or come back
           </p>
         </div>
         <div className="flex items-center gap-1">
