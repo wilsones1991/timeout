@@ -75,15 +75,16 @@ model Classroom {
 // Student model
 // Names are encrypted at rest for FERPA compliance
 model Student {
-  id              String             @id @default(cuid())
-  firstName       String             // Encrypted at rest
-  lastName        String             // Encrypted at rest
-  cardId          String             @unique @default(cuid()) // UUID for QR code (not encrypted - not PII)
-  createdAt       DateTime           @default(now())
-  updatedAt       DateTime           @updatedAt
-  classrooms      ClassroomStudent[]
-  checkIns        CheckIn[]
-  waitListEntries WaitListEntry[]
+  id               String             @id @default(cuid())
+  firstName        String             // Encrypted at rest
+  lastName         String             // Encrypted at rest
+  cardId           String             @unique @default(cuid()) // UUID for QR code (not encrypted - not PII)
+  googleUserIdHash String?            @unique // SHA-256 hash of Google userId (for cross-teacher student matching)
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  classrooms       ClassroomStudent[]
+  checkIns         CheckIn[]
+  waitListEntries  WaitListEntry[]
 }
 
 // Join table for many-to-many relationship between Student and Classroom

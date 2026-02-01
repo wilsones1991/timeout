@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { encrypt } from '@/lib/encryption'
+import { hashGoogleUserId } from '@/lib/hash'
 import {
   getValidAccessToken,
   fetchAllCourses,
@@ -90,27 +91,48 @@ export async function POST(request: NextRequest) {
             },
           })
 
-          // Create students and enroll them
+          // Create or reuse students and enroll them
           for (const googleStudent of googleStudents) {
             const firstName = googleStudent.profile.name.givenName
             const lastName = googleStudent.profile.name.familyName
+            const googleUserIdHash = hashGoogleUserId(googleStudent.userId)
 
-            // Create student with encrypted name
-            const student = await tx.student.create({
-              data: {
-                firstName: encrypt(firstName),
-                lastName: encrypt(lastName),
-                // cardId is auto-generated
+            // Check if student already exists (imported by another teacher)
+            let student = await tx.student.findUnique({
+              where: { googleUserIdHash },
+            })
+
+            if (!student) {
+              // Create new student with encrypted name and Google ID hash
+              student = await tx.student.create({
+                data: {
+                  firstName: encrypt(firstName),
+                  lastName: encrypt(lastName),
+                  googleUserIdHash,
+                  // cardId is auto-generated
+                },
+              })
+            }
+
+            // Check if student is already enrolled in this classroom
+            const existingEnrollment = await tx.classroomStudent.findUnique({
+              where: {
+                studentId_classroomId: {
+                  studentId: student.id,
+                  classroomId: newClassroom.id,
+                },
               },
             })
 
-            // Enroll student in classroom
-            await tx.classroomStudent.create({
-              data: {
-                studentId: student.id,
-                classroomId: newClassroom.id,
-              },
-            })
+            // Only enroll if not already enrolled
+            if (!existingEnrollment) {
+              await tx.classroomStudent.create({
+                data: {
+                  studentId: student.id,
+                  classroomId: newClassroom.id,
+                },
+              })
+            }
           }
 
           return newClassroom
